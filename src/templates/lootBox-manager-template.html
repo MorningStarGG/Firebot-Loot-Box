@@ -1,0 +1,261 @@
+<style>
+    .msgg-lootbox-tag {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 3px;
+        padding: 2px 6px;
+        margin: 2px;
+        cursor: pointer;
+    }
+
+    .msgg-lootbox-tag.active {
+        background: rgba(0, 150, 255, 0.25);
+        border-color: rgba(0, 150, 255, 0.5);
+    }
+
+    .msgg-lootbox-inventory {
+        font-size: 13px;
+    }
+
+    .msgg-lootbox-inventory th,
+    .msgg-lootbox-inventory td {
+        padding: 4px 6px;
+    }
+</style>
+
+<eos-container header="Target Loot Box" pad-top="true" aria-label="Choose the loot box to manage">
+    <div class="input-group">
+        <firebot-input input-title="Loot Box ID" model="effect.lootBoxId" placeholder="example_loot_box"
+            aria-label="Loot box id to manage"></firebot-input>
+        <span class="input-group-btn">
+            <button class="btn btn-default" ng-click="refreshLootBoxes()" aria-label="Refresh known loot boxes">
+                <i class="far fa-sync"></i>
+            </button>
+        </span>
+    </div>
+    <div ng-if="knownLootBoxes.length" style="margin-top: 10px;">
+        <label style="font-weight:600;">Known Loot Boxes</label>
+        <div>
+            <span class="msgg-lootbox-tag" ng-repeat="box in knownLootBoxes"
+                ng-class="{ 'active': box.id === effect.lootBoxId }" ng-click="selectLootBox(box)">
+                {{box.displayName}} <small>({{box.id}})</small>
+            </span>
+        </div>
+    </div>
+</eos-container>
+
+<eos-container header="Manager Action" pad-top="true" aria-label="Select the manager action to run">
+    <firebot-radios options="actionOptions" model="effect.action" inline="true" aria-label="Select manager action">
+    </firebot-radios>
+</eos-container>
+
+<eos-container ng-if="['editItem', 'removeItem', 'adjustStock', 'setMaxWins', 'setWeight'].indexOf(effect.action) !== -1"
+    header="Item Selection" pad-top="true" aria-label="Choose how to target loot items">
+    <div class="input-group" style="margin-bottom: 10px;">
+        <span class="input-group-addon">Selection Mode</span>
+        <select class="form-control" ng-model="effect.itemSelectionMode" aria-label="Choose item selection mode">
+            <option value="list">Loot item list</option>
+            <option value="manual">Manual entry</option>
+        </select>
+    </div>
+
+    <div ng-if="effect.itemSelectionMode === 'manual'">
+        <firebot-input input-title="Manual Item ID" model="effect.manualItemId" placeholder="mystic_sword"
+            aria-label="Manual loot item id to target"></firebot-input>
+        <div class="effect-info alert alert-info" role="alert" style="margin-top: 10px;">
+            Provide the exact item ID (or $variable) when the list is empty. Manual mode will not auto-fill the fields
+            below.
+        </div>
+    </div>
+
+    <div ng-if="effect.itemSelectionMode !== 'manual'">
+        <label style="font-weight:600;">Available Items</label>
+        <dropdown-select options="lootBoxItemOptions" selected="effect.itemDisplay"
+            ng-disabled="!lootBoxItemOptions.length" aria-label="Select loot item"></dropdown-select>
+        <div ng-if="!lootBoxItemOptions.length" class="effect-info alert alert-warning" role="alert"
+            style="margin-top: 10px;">
+            No cached items for this loot box. Refresh above or switch to manual entry.
+        </div>
+    </div>
+</eos-container>
+
+<setting-container header="Action Details" collapsed="false" aria-label="Provide action specific details">
+    <div ng-switch="effect.action">
+        <div ng-switch-when="open">
+            <div class="effect-info alert alert-info" role="alert">
+                Selects the next prize for this loot box and stores it until the overlay effect is triggered.
+            </div>
+        </div>
+
+        <div ng-switch-when="addItem">
+            <firebot-input input-title="Item Label" model="effect.label" placeholder="Mystic Sword"
+                aria-label="New loot item label"></firebot-input>
+            <firebot-input input-title="Value / Output" model="effect.value" placeholder="!redeem mystic_sword"
+                aria-label="New loot item value or command"></firebot-input>
+            <firebot-input input-title="Subtitle (optional)" model="effect.subtitle" placeholder="Legendary"
+                aria-label="New loot item subtitle"></firebot-input>
+            <div class="row">
+                <div class="col-md-6">
+                    <firebot-input input-title="Weight" type="number" model="effect.weight" placeholder="1"
+                        aria-label="Reward weight"></firebot-input>
+                </div>
+                <div class="col-md-6">
+                    <firebot-input input-title="Max Wins" type="number" model="effect.maxWins"
+                        placeholder="Leave blank for unlimited" aria-label="Maximum wins for this item"></firebot-input>
+                </div>
+            </div>
+            <firebot-input input-title="Accent Color (optional)" model="effect.accentColor" placeholder="#ff54d7"
+                aria-label="Accent color for this item"></firebot-input>
+            <firebot-radios options="{ url: 'Image URL', local: 'Local file' }" model="effect.imageMode" inline="true"
+                aria-label="Choose image source"></firebot-radios>
+            <div ng-if="effect.imageMode === 'url'">
+                <firebot-input input-title="Image URL" model="effect.imageUrl" placeholder="https://..."
+                    aria-label="Image URL for new item"></firebot-input>
+            </div>
+            <div ng-if="effect.imageMode === 'local'">
+                <file-chooser model="effect.imageFile"
+                    options="{ filters: [ { name:'Image', extensions:['png','jpg','jpeg','gif','webp','svg'] } ] }"
+                    aria-label="Select local image file for item">
+                </file-chooser>
+            </div>
+            <div class="effect-info alert alert-info" role="alert" style="margin-top: 10px;">
+                Added items inherit the loot box styling automatically. Trigger the overlay effect to refresh visuals.
+            </div>
+        </div>
+
+        <div ng-switch-when="editItem">
+            <div ng-if="effect.itemSelectionMode === 'manual'" class="effect-info alert alert-warning" role="alert"
+                style="margin-bottom: 10px;">
+                Manual mode will not auto-populate the fields belowÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Âdouble-check the values before saving.
+            </div>
+
+            <firebot-input input-title="Item Label" model="effect.label" placeholder="Mystic Sword"
+                aria-label="Updated loot item label"></firebot-input>
+            <firebot-input input-title="Value / Output" model="effect.value" placeholder="!redeem mystic_sword"
+                aria-label="Updated loot item value or command"></firebot-input>
+            <firebot-input input-title="Subtitle (optional)" model="effect.subtitle" placeholder="Legendary"
+                aria-label="Updated loot item subtitle"></firebot-input>
+            <div class="row">
+                <div class="col-md-6">
+                    <firebot-input input-title="Weight" type="number" model="effect.weight" placeholder="1"
+                        aria-label="Updated reward weight"></firebot-input>
+                </div>
+                <div class="col-md-6">
+                    <firebot-input input-title="Max Wins" type="number" model="effect.maxWins"
+                        placeholder="Leave blank for unlimited" aria-label="Updated maximum wins for this item"></firebot-input>
+                </div>
+            </div>
+            <firebot-input input-title="Accent Color (optional)" model="effect.accentColor" placeholder="#ff54d7"
+                aria-label="Updated accent color for this item"></firebot-input>
+            <firebot-radios options="{ url: 'Image URL', local: 'Local file' }" model="effect.imageMode" inline="true"
+                aria-label="Choose updated image source"></firebot-radios>
+            <div ng-if="effect.imageMode === 'url'">
+                <firebot-input input-title="Image URL" model="effect.imageUrl" placeholder="https://..."
+                    aria-label="Updated image URL for item"></firebot-input>
+            </div>
+            <div ng-if="effect.imageMode === 'local'">
+                <file-chooser model="effect.imageFile"
+                    options="{ filters: [ { name:'Image', extensions:['png','jpg','jpeg','gif','webp','svg'] } ] }"
+                    aria-label="Select updated local image file for item">
+                </file-chooser>
+            </div>
+            <div class="effect-info alert alert-info" role="alert" style="margin-top: 10px;">
+                Saving updates keeps the item's win history unless Max Wins is reduced below current wins.
+            </div>
+        </div>
+
+        <div ng-switch-when="removeItem">
+            <div class="effect-info alert alert-warning" role="alert" style="margin-top: 10px;">
+                Removing an item clears its stock and history.
+            </div>
+        </div>
+
+        <div ng-switch-when="adjustStock">
+            <firebot-radios options="{ add: 'Add to Stock', subtract: 'Remove from Stock' }"
+                model="effect.stockOperation" inline="true" aria-label="Choose add or subtract operation"
+                style="margin-top: 10px; margin-bottom: 10px;"></firebot-radios>
+
+            <firebot-input input-title="Amount" type="number" model="effect.stockAmount"
+                placeholder="Enter positive amount" aria-label="Stock adjustment amount"></firebot-input>
+        </div>
+
+        <div ng-switch-when="setMaxWins">
+            <div ng-if="effect.itemSelectionMode === 'manual'" class="effect-info alert alert-info" role="alert"
+                style="margin-bottom: 10px;">
+                Manual entry uses the ID supplied above.
+            </div>
+
+            <firebot-input input-title="New Max Wins" type="number" model="effect.maxWins"
+                placeholder="Leave blank for unlimited" aria-label="Set new maximum wins"></firebot-input>
+        </div>
+
+        <div ng-switch-when="setWeight">
+            <div ng-if="effect.itemSelectionMode === 'manual'" class="effect-info alert alert-info" role="alert"
+                style="margin-bottom: 10px;">
+                Manual entry uses the ID supplied above.
+            </div>
+
+            <firebot-input input-title="New Weight" type="number" model="effect.weight"
+                placeholder="Enter positive weight value" aria-label="Set new weight value"></firebot-input>
+            <div class="effect-info alert alert-info" role="alert" style="margin-top: 10px;">
+                Higher weight = more likely to be selected. Must be greater than 0.
+            </div>
+        </div>
+
+        <div ng-switch-when="editTiming">
+            <div ng-if="!effect.lootBoxId" class="effect-info alert alert-warning" role="alert">
+                Enter or select a loot box ID above to edit timing.
+            </div>
+            <div ng-if="effect.lootBoxId">
+                <firebot-radios
+                    options="{ lengthSeconds: 'Overlay length (seconds)', revealDelayMs: 'Build-up before reveal (ms)', revealHoldMs: 'Showcase hold after reveal (ms)' }"
+                    model="effect.timingField" inline="true" aria-label="Select timing value to edit"
+                    style="margin-bottom: 10px;"></firebot-radios>
+                <firebot-input input-title="New Timing Value" type="number" model="effect.timingValue"
+                    placeholder="Enter timing value" aria-label="Enter new timing value"></firebot-input>
+                <div class="effect-info alert alert-info" role="alert" style="margin-top: 10px;">
+                    Current values - Length: {{timingSnapshot.lengthSeconds !== undefined ? timingSnapshot.lengthSeconds : 'N/A'}}s,
+                    Build-up: {{timingSnapshot.revealDelayMs !== undefined ? timingSnapshot.revealDelayMs : 'N/A'}}ms,
+                    Hold: {{timingSnapshot.revealHoldMs !== undefined ? timingSnapshot.revealHoldMs : 'N/A'}}ms.
+                </div>
+            </div>
+        </div>
+
+        <div ng-switch-when="reset">
+            <div class="effect-info alert alert-warning" role="alert">
+                Resets all item wins for this loot box back to zero and clears the pending selection.
+            </div>
+        </div>
+    </div>
+
+    <div ng-if="inventorySummary.length" style="margin-top: 15px;">
+        <label style="font-weight:600;">Inventory Snapshot</label>
+        <table class="table table-condensed msgg-lootbox-inventory">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th style="text-align:right;">Wins</th>
+                    <th style="text-align:right;">Remaining</th>
+                    <th style="text-align:right;">Max</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="item in inventorySummary">
+                    <td>{{item.label}}</td>
+                    <td style="text-align:right;">{{item.wins}}</td>
+                    <td style="text-align:right;">{{item.remaining === null ? '\u221E' : item.remaining}}</td>
+                    <td style="text-align:right;">{{item.maxWins === null ? '\u221E' : item.maxWins}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</setting-container>
+
+<eos-container>
+    <div class="effect-info alert alert-info" role="alert">
+        For the reveal, run the overlay loot box effect after using the manager to open a box.
+    </div>
+</eos-container>
+
+
