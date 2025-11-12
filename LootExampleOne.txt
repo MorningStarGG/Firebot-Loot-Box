@@ -1,0 +1,27 @@
+[
+  {
+    "label": "Mythic Blade",
+    "subtitle": "Legendary Drop",
+    "value": "!give mythic_blade",
+    "weight": 1,
+    "imageMode": "url",
+    "imageUrl": "https://example.com/assets/blade.png",
+    "accentColor": "#ff4ecd"
+  },
+  {
+    "label": "Phoenix Wings",
+    "subtitle": "Epic Cosmetic",
+    "value": "!unlock phoenix_wings",
+    "weight": 2,
+    "imageMode": "url",
+    "imageUrl": "https://example.com/assets/wings.png",
+    "accentColor": "#ffa94d"
+  },
+  {
+    "label": "Credits",
+    "value": "500 credits",
+    "weight": 4,
+    "imageMode": "local",
+    "imageFile": "C:/firebot/assets/credits.png"
+  }
+]

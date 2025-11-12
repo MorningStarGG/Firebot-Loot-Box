@@ -1,0 +1,202 @@
+<style>
+    .effect-setting-content {
+        margin-bottom: -10px;
+    }
+</style>
+
+<!-- Loot Box Identity -->
+<eos-container header="Loot Box Identity" pad-top="true" aria-label="Configure loot box identifiers">
+    <firebot-input input-title="Loot Box ID" model="effect.lootBoxId" placeholder="example_loot_box"
+        aria-label="Set unique loot box id"></firebot-input>
+    <div class="effect-info alert alert-info" role="alert" style="margin: 10px 0;">
+        Use letters, numbers, hyphens, or underscores. This ID links the overlay to the Loot Box Manager.
+    </div>
+    <firebot-input input-title="Display Name (optional)" model="effect.lootBoxDisplayName" placeholder="Treasure Chest"
+        aria-label="Set loot box display name"></firebot-input>
+</eos-container>
+
+<!-- Timing & Behaviour Section -->
+<eos-container header="Timing & Behaviour" pad-top="true" aria-label="Configure timing and behavior settings">
+    <div style="margin-bottom: 10px;">
+        <firebot-input input-title="Overlay length (seconds)" model="effect.length"
+            placeholder="How long the overlay stays visible" aria-label="Set overlay duration"></firebot-input>
+    </div>
+    <div style="margin-bottom: 10px;">
+        <firebot-input input-title="Build-up before reveal (ms)" model="effect.EventData.props.revealDelayMs"
+            placeholder="Default 2200" aria-label="Set reveal delay"></firebot-input>
+    </div>
+    <div style="margin-bottom: 10px;">
+        <firebot-input input-title="Showcase hold after reveal (ms)" model="effect.EventData.props.revealHoldMs"
+            placeholder="Default 5200" aria-label="Set reveal hold duration"></firebot-input>
+    </div>
+    <label class="control-fb control--checkbox" aria-label="Toggle confetti burst effect">
+        Confetti burst on reveal
+        <input type="checkbox" ng-model="effect.EventData.props.showConfetti">
+        <div class="control__indicator"></div>
+    </label>
+</eos-container>
+
+<!-- Visual Style Section -->
+<eos-container header="Visual Style" pad-top="true" aria-label="Configure visual appearance">
+    <div class="row">
+        <div class="col-md-6">
+            <div style="margin-bottom: 10px;">
+                <color-picker-input model="effect.EventData.props.backgroundGradientStart" label="BG Start"
+                    aria-label="Select background gradient start color">
+                </color-picker-input>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <color-picker-input model="effect.EventData.props.glowColor" label="Glow"
+                    aria-label="Select glow color"></color-picker-input>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <color-picker-input model="effect.EventData.props.textColor" label="Item"
+                    aria-label="Select item name color"></color-picker-input>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div style="margin-bottom: 10px;">
+                <color-picker-input model="effect.EventData.props.backgroundGradientEnd" label="BG End"
+                    aria-label="Select background gradient end color">
+                </color-picker-input>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <color-picker-input model="effect.EventData.props.accentColor" label="Accent"
+                    aria-label="Select accent color"></color-picker-input>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <color-picker-input model="effect.EventData.props.subtitleColor" label="Subtitle"
+                    aria-label="Select subtitle color"></color-picker-input>
+            </div>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <color-picker-input model="effect.EventData.props.valueColor" label="Value"
+                aria-label="Select subtitle and value color">
+            </color-picker-input>
+        </div>
+    </div>
+
+    <div class="input-group" style="margin-bottom: 10px;">
+        <span class="input-group-addon" id="fontFamilyLabel">Headline font</span>
+        <select class="form-control" ng-model="effect.EventData.props.fontFamily" aria-labelledby="fontFamilyLabel">
+            <option ng-repeat="font in fontOptions" value="{{font}}">{{font}}</option>
+        </select>
+    </div>
+    <label class="control-fb control--checkbox" aria-label="Toggle background visibility">
+        Hide overlay background
+        <input type="checkbox" ng-model="effect.EventData.props.hideBackground">
+        <div class="control__indicator"></div>
+    </label>
+</eos-container>
+
+<!-- Loot Items Source Section -->
+<eos-container header="Loot Items Source" pad-top="true" aria-label="Choose loot items source method">
+    <firebot-radios style="margin-bottom: 10px;" options="{ list: 'List', file: 'File', variable: 'Variable' }"
+        model="effect.fileOrList" inline="true" aria-label="Select loot items input mode"></firebot-radios>
+</eos-container>
+
+<!-- Loot Items Configuration -->
+<setting-container header="Loot Items" collapsed="false" ng-if="effect.fileOrList === 'list'"
+    aria-label="Configure individual loot items">
+    <div ng-repeat="item in effect.EventData.props.items track by $index"
+        style="margin-bottom: 15px; padding: 15px; border: 1px solid #444; border-radius: 4px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="margin: 0;">Item {{$index + 1}}</h4>
+            <span class="clickable" style="color:#fb7373;"
+                ng-click="removeLootBoxItemAtIndex($index); $event.stopPropagation();"
+                aria-label="Remove item {{$index + 1}}">
+                <i class="fad fa-trash-alt"></i>
+            </span>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <firebot-input input-title="Label" model="item.label" placeholder="Name shown on reveal"
+                aria-label="Enter item label"></firebot-input>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <firebot-input input-title="Subtitle" model="item.subtitle" placeholder="Rarity tag or flavour text"
+                aria-label="Enter item subtitle">
+            </firebot-input>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <div style="margin-bottom: 10px;">
+                <firebot-input input-title="Value" model="item.value" placeholder="Command output or reward value"
+                    aria-label="Enter item value">
+                </firebot-input>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <firebot-input input-title="Weight" model="item.weight" placeholder="Higher = more likely"
+                    aria-label="Enter item weight">
+                </firebot-input>
+            </div>
+            <div class="col-md-6">
+                <firebot-input input-title="Max Wins" type="number" model="item.maxWins"
+                    placeholder="Leave blank for unlimited" aria-label="Set maximum wins allowed for this item">
+                </firebot-input>
+                <div style="font-size: 12px; color: #bbbbbb;">
+                    Leave blank for unlimited stock.
+                </div>
+            </div>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <color-picker-input model="item.accentColor" label="Item accent"
+                aria-label="Select item accent color"></color-picker-input>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <firebot-radios options="{ url: 'Image URL', local: 'Local file' }" model="item.imageMode" inline="true"
+                aria-label="Select image input mode">
+            </firebot-radios>
+        </div>
+        <div ng-if="item.imageMode === 'url'" style="margin-bottom: 10px;">
+            <firebot-input input-title="Image URL" model="item.imageUrl" placeholder="https://..."
+                aria-label="Enter image URL"></firebot-input>
+        </div>
+        <div ng-if="item.imageMode === 'local'">
+            <file-chooser model="item.imageFile"
+                options="{ filters: [ { name:'Image', extensions:['png','jpg','jpeg','gif','webp','svg'] } ] }"
+                aria-label="Select local image file">
+            </file-chooser>
+        </div>
+    </div>
+    <div style="margin-top: 10px;">
+        <button class="btn btn-primary" ng-click="addLootBoxItem()" aria-label="Add new loot item">
+            <i class="far fa-plus"></i> Add Loot Item
+        </button>
+    </div>
+</setting-container>
+
+<!-- Items from Variable -->
+<setting-container header="Items from variable" ng-if="effect.fileOrList === 'variable'"
+    aria-label="Configure loot items from variable">
+    <firebot-input input-title="Variable (JSON array)" model="effect.variable"
+        placeholder="Variable that resolves to a JSON array of loot items"
+        aria-label="Enter variable name"></firebot-input>
+    <div class="effect-info alert alert-info" role="alert">
+        Expecting an array of objects matching the fields above. Example:
+        <code>[{ "label": "Mythic Blade", "weight": 1, "imageUrl": "https://..." }]</code>
+    </div>
+</setting-container>
+
+<!-- Items from File -->
+<setting-container header="Items from file" ng-if="effect.fileOrList === 'file'"
+    aria-label="Configure loot items from file">
+    <file-chooser model="effect.filePath" options="{ filters: [ { name:'JSON', extensions:['json','txt'] } ] }"
+        aria-label="Select JSON file with loot items">
+    </file-chooser>
+    <div class="effect-info alert alert-info" role="alert">
+        Provide a JSON file containing an array of loot item objects.
+    </div>
+</setting-container>
+
+<!-- Overlay Position and Instance Settings -->
+<eos-overlay-position effect="effect" pad-top="true"></eos-overlay-position>
+<eos-overlay-instance effect="effect" pad-top="true"></eos-overlay-instance>
+
+<!-- Overlay Information Alert -->
+<eos-container>
+    <div class="effect-info alert alert-warning" role="alert">
+        This effect requires the Firebot overlay to be loaded in your broadcasting software.
+        <a href ng-click="showOverlayInfoModal()" style="text-decoration:underline"
+            aria-label="Learn more about Firebot overlay requirements">Learn more</a>
+    </div>

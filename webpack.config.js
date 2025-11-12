@@ -2,52 +2,74 @@ const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
 const packageJson = require("./package.json");
 
-module.exports = {
-  target: "node",
-  mode: "production",
-  devtool: false,
-  entry: {
-    main: "./src/main.ts",
-  },
-  output: {
-    libraryTarget: "commonjs2",
-    libraryExport: "default",
-    path: path.resolve(__dirname, "./dist"),
-    filename: `${packageJson.scriptOutputName}.js`,
-  },
-  resolve: {
-    extensions: [".ts", ".js", ".html"],
-  },
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        loader: "ts-loader",
+module.exports = (env, argv) => {
+  const isProduction = argv.mode === "production";
+  return {
+    target: "node",
+    mode: isProduction ? "production" : "development",
+    devtool: isProduction ? false : "source-map",
+    entry: {
+      main: "./src/main.ts",
+    },
+    output: {
+      libraryTarget: "commonjs2",
+      libraryExport: "default",
+      path: path.resolve(__dirname, "./dist"),
+      filename: "MSGG-LootBox.js",
+      clean: true,
+    },
+    resolve: {
+      extensions: [".ts", ".js", ".html"],
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
       },
-      {
-        test: /\.html$/i,
-        loader: 'raw-loader',
-      },
-      {
-        test: /\.mj$/i,
-        loader: "raw-loader",
-      }
-    ],
-  },
-  optimization: {
-    minimize: false,
-
-    minimizer: [
-      new TerserPlugin({
-        terserOptions: {
-          keep_fnames: /main/,
-          mangle: false,
-          format: {
-            comments: false,
-          },
+    },
+    module: {
+      rules: [
+        {
+          test: /\.ts$/,
+          use: [
+            {
+              loader: "ts-loader",
+              options: {
+                transpileOnly: !isProduction,
+              },
+            },
+          ],
+          exclude: /node_modules/,
         },
-        extractComments: false,
-      }),
-    ],
-  },
+        {
+          test: /\.html$/i,
+          loader: 'raw-loader',
+        }
+      ],
+    },
+    optimization: {
+      minimize: false,
+      concatenateModules: true,
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+            keep_fnames: /main/,
+            mangle: false,
+            format: {
+              comments: false,
+            },
+            compress: {
+              dead_code: true,
+              unused: true,
+            },
+          },
+          extractComments: false,
+        }),
+      ],
+    },
+    performance: {
+      hints: false,
+    },
+    stats: {
+      modules: false,
+      children: false,
+    }
+  };
 };

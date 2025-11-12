@@ -1,0 +1,563 @@
+<div id="{{MSGG_LOOTBOX_ID}}" class="msgg-lootbox-wrapper">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
+
+        .msgg-lootbox-wrapper {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.08), transparent 58%),
+                linear-gradient(160deg, var(--bg-start), var(--bg-end));
+            opacity: 0;
+            transition: opacity 600ms ease;
+            font-family: var(--font-family, 'Montserrat', sans-serif);
+        }
+
+        .msgg-lootbox-wrapper.msgg-no-background {
+            background: none;
+        }
+
+        .msgg-lootbox-wrapper.msgg-entered {
+            opacity: 1;
+        }
+
+        .epic-stage {
+            position: relative;
+            width: min(82vw, 920px);
+            height: min(68vh, 640px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .epic-backdrop {
+            position: absolute;
+            inset: -18%;
+            background: radial-gradient(circle at 50% 40%, var(--glow-alpha, rgba(255, 255, 255, 0.14)), transparent 70%);
+            filter: blur(60px);
+            opacity: 0.65;
+        }
+
+        .epic-backdrop.halo {
+            inset: -32%;
+            background: radial-gradient(circle at center, var(--glow-strong-alpha, rgba(255, 255, 255, 0.32)), transparent 75%);
+            filter: blur(90px);
+            opacity: 0.55;
+        }
+
+        .particles-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 35;
+        }
+
+        .lootbox-scene {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            perspective: 2000px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+        }
+
+        .lootbox {
+            position: relative;
+            width: clamp(280px, 32vw, 380px);
+            height: clamp(280px, 32vw, 380px);
+            transform-style: preserve-3d;
+        }
+
+        .lootbox::after {
+            content: "";
+            position: absolute;
+            width: 140%;
+            height: 32%;
+            left: 50%;
+            bottom: -14%;
+            transform: translateX(-50%);
+            filter: blur(8px);
+            z-index: 1;
+        }
+
+        .box-body {
+            position: absolute;
+            width: 100%;
+            height: 68%;
+            bottom: 0;
+            background: linear-gradient(145deg, var(--accent-light, var(--accent-color)), var(--accent-color) 55%, var(--accent-dark, var(--accent-color)));
+            border: 5px solid var(--accent-color);
+            border-radius: 30px;
+            box-shadow:
+                0 35px 85px rgba(0, 0, 0, 0.78),
+                inset 0 6px 28px rgba(255, 255, 255, 0.18),
+                0 0 120px var(--glow-strong-alpha, rgba(255, 255, 255, 0.24));
+            overflow: hidden;
+            transition: opacity 0.55s ease, transform 0.55s ease;
+        }
+
+        .lootbox.opened .box-body {
+            opacity: 0;
+            transform: scale(0.82);
+        }
+
+        .box-body::before {
+            content: "";
+            position: absolute;
+            inset: 16%;
+            border-radius: 22px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 0 28px rgba(255, 255, 255, 0.12);
+            opacity: 0.9;
+        }
+
+        .box-body::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.18), transparent 60%);
+            opacity: 0.8;
+        }
+
+        .box-shine {
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 120%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+            animation: shineMove 3.2s infinite;
+        }
+
+        .box-band {
+            position: absolute;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.1));
+            opacity: 0.45;
+        }
+
+        .box-band.horizontal {
+            height: 14%;
+            width: 112%;
+            top: 32%;
+            left: -6%;
+            border-radius: 18px;
+        }
+
+        .box-band.vertical {
+            width: 16%;
+            height: 112%;
+            left: 42%;
+            top: -6%;
+            border-radius: 18px;
+        }
+
+        .box-lid {
+            position: absolute;
+            width: 108%;
+            height: 36%;
+            top: -4%;
+            left: -4%;
+            background: linear-gradient(145deg, var(--accent-light, var(--accent-color)), var(--accent-color) 60%, var(--accent-dark, var(--accent-color)));
+            border: 5px solid var(--accent-color);
+            border-radius: 30px 30px 12px 12px;
+            transform-origin: bottom center;
+            box-shadow:
+                0 24px 60px rgba(0, 0, 0, 0.6),
+                inset 0 6px 30px rgba(255, 255, 255, 0.18),
+                0 0 120px var(--glow-alpha, rgba(255, 255, 255, 0.2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .lid-decoration {
+            font-size: clamp(2.4rem, 3vw, 3.4rem);
+            color: rgba(255, 255, 255, 0.92);
+            filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.9));
+            animation: lidGlow 2.6s ease-in-out infinite;
+        }
+
+        .lootbox.shake {
+            animation: boxShake 0.55s ease-in-out;
+        }
+
+        .lootbox.opening .box-lid {
+            animation: lidFlyOff 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+
+        .flash-overlay {
+            position: absolute;
+            inset: -20%;
+            background: radial-gradient(circle at 50% 40%,
+                    var(--glow-strong-alpha, rgba(255, 255, 255, 0.9)) 0%,
+                    var(--glow-alpha, rgba(255, 255, 255, 0.6)) 30%,
+                    transparent 70%);
+            opacity: 0;
+            pointer-events: none;
+            filter: blur(30px);
+            z-index: 50;
+        }
+
+        .flash-overlay.flash {
+            animation: flashBurst 0.6s ease-out forwards;
+        }
+
+        .particle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            opacity: 0;
+        }
+
+        .lootbox.opening .particle {
+            animation: explodeParticle 1.6s ease-out 0.3s forwards;
+        }
+
+        .reward-display {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 60;
+        }
+
+        .reward-display.show {
+            animation: rewardEmerge 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            pointer-events: auto;
+        }
+
+        .reward-display.show .reward-card {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            animation: rewardEmerge 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .reward-display.show .reward-image img {
+            display: block;
+        }
+
+        .reward-display.show .reward-image-fallback {
+            display: none;
+        }
+
+        .reward-card {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: clamp(18px, 3vw, 32px);
+            padding: clamp(26px, 3vw, 36px);
+            border-radius: 28px;
+            background: rgba(12, 10, 32, 0.88);
+            border: 3px solid var(--reward-accent, var(--accent-color));
+            box-shadow:
+                0 32px 75px rgba(0, 0, 0, 0.55),
+                0 0 65px var(--reward-accent-strong, rgba(255, 255, 255, 0.35)),
+                inset 0 0 35px rgba(255, 255, 255, 0.08);
+            transform: translateY(40px) scale(0.85);
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .reward-card.active {
+            animation: cardShine 2.6s ease-in-out infinite 1.6s;
+        }
+
+        .reward-card::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 500%;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.25),
+                    transparent);
+            transform: translate(-50%, -50%) rotate(45deg);
+            animation: shineCard 3s infinite;
+        }
+
+        .reward-card::after {
+            content: "";
+            position: absolute;
+            inset: -12%;
+            border-radius: inherit;
+            background: radial-gradient(circle, var(--reward-accent-alpha, rgba(255, 255, 255, 0.25)) 0%, transparent 70%);
+            filter: blur(30px);
+            opacity: 0.9;
+            z-index: -1;
+        }
+
+        .reward-glow {
+            position: absolute;
+            inset: -35%;
+            border-radius: inherit;
+            background: radial-gradient(circle, var(--reward-accent-alpha, rgba(255, 255, 255, 0.28)) 0%, transparent 70%);
+            filter: blur(40px);
+            opacity: 0.75;
+            z-index: -2;
+        }
+
+        .reward-image {
+            position: relative;
+            flex-shrink: 0;
+            width: clamp(150px, 18vw, 210px);
+            aspect-ratio: 1 / 1;
+            border-radius: 22px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            background: linear-gradient(145deg, var(--reward-accent-light, var(--reward-accent)), var(--reward-accent, var(--accent-color)));
+            box-shadow: 0 0 40px var(--reward-accent-strong, rgba(255, 255, 255, 0.35));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: rewardFloat 3s ease-in-out infinite 1.2s;
+        }
+
+        .reward-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .reward-image-fallback {
+            font-size: clamp(54px, 6vw, 72px);
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.92);
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.65);
+        }
+
+        .reward-info {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(6px, 1.2vw, 14px);
+            min-width: 0;
+            text-align: left;
+        }
+
+        .reward-name,
+        .reward-subtitle,
+        .reward-value {
+            margin: 0;
+            word-break: break-word;
+            text-align: center;
+        }
+
+        .reward-name {
+            font-size: clamp(32px, 4.6vw, 56px);
+            font-weight: 800;
+            font-family: var(--font-family, 'Montserrat', sans-serif);
+            letter-spacing: 0.08em;
+            color: var(--text-color, #ffffff);
+            text-shadow:
+                0 0 24px rgba(0, 0, 0, 0.42),
+                0 0 38px rgba(255, 255, 255, 0.22);
+        }
+
+        .reward-subtitle {
+            font-size: clamp(18px, 3vw, 26px);
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: var(--subtitle-color, #ffa94d);
+            opacity: 1;
+        }
+
+        .reward-value {
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 600;
+            color: var(--value-color, #ffe8a3);
+            opacity: 1;
+        }
+
+        @keyframes shineMove {
+            0% {
+                left: -120%;
+            }
+
+            55%,
+            100% {
+                left: 140%;
+            }
+        }
+
+        @keyframes lidGlow {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.9));
+            }
+
+            50% {
+                transform: scale(1.08);
+                filter: drop-shadow(0 0 36px rgba(255, 255, 255, 1));
+            }
+        }
+
+        @keyframes boxShake {
+
+            0%,
+            100% {
+                transform: translate3d(0, 0, 0) rotate(0deg);
+            }
+
+            20%,
+            60% {
+                transform: translate3d(-6px, -2px, 0) rotate(-1.5deg);
+            }
+
+            40%,
+            80% {
+                transform: translate3d(6px, 3px, 0) rotate(1.5deg);
+            }
+        }
+
+        @keyframes lidFlyOff {
+            0% {
+                transform: translate3d(0, 0, 0) rotateX(0deg) scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: translate3d(0, -110px, 0) rotateX(-28deg) scale(1.08);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate3d(60px, -320px, 0) rotateX(-60deg) rotateZ(18deg) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes explodeParticle {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.1);
+            }
+        }
+
+        @keyframes rewardEmerge {
+            0% {
+                opacity: 0;
+                transform: translateY(100px) scale(0.4);
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes cardShine {
+
+            0%,
+            100% {
+                box-shadow:
+                    0 32px 75px rgba(0, 0, 0, 0.55),
+                    0 0 65px var(--reward-accent-strong, rgba(255, 255, 255, 0.35)),
+                    inset 0 0 35px rgba(255, 255, 255, 0.08);
+            }
+
+            50% {
+                box-shadow:
+                    0 40px 95px rgba(0, 0, 0, 0.6),
+                    0 0 95px var(--reward-accent-strong, rgba(255, 255, 255, 0.5)),
+                    inset 0 0 45px rgba(255, 255, 255, 0.12);
+            }
+        }
+
+        @keyframes shineCard {
+            from {
+                transform: translate(-250%, -50%) rotate(45deg);
+            }
+
+            to {
+                transform: translate(250%, -50%) rotate(45deg);
+            }
+        }
+
+        @keyframes rewardFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
+        }
+
+        @keyframes flashBurst {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            40% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(1.5);
+            }
+        }
+    </style>
+    <div class="epic-stage">
+        <div class="epic-backdrop"></div>
+        <div class="epic-backdrop halo"></div>
+        <div class="particles-container"></div>
+        <div class="lootbox-scene">
+            <div class="lootbox">
+                <div class="box-body">
+                    <div class="box-shine"></div>
+                    <div class="box-band horizontal"></div>
+                    <div class="box-band vertical"></div>
+                </div>
+                <div class="box-lid">
+                    <div class="lid-decoration">✦</div>
+                </div>
+                <div class="flash-overlay"></div>
+            </div>
+        </div>
+        <div class="reward-display">
+            <div class="reward-card">
+                <div class="reward-glow"></div>
+                <div class="reward-image">
+                    <img alt="Loot Reward" />
+                    <div class="reward-image-fallback">?</div>
+                </div>
+                <div class="reward-info">
+                    <div class="reward-name"></div>
+                    <div class="reward-subtitle"></div>
+                    <div class="reward-value"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

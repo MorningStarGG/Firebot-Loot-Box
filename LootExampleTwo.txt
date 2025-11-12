@@ -1,0 +1,28 @@
+[
+  {
+    "label": "Common Spray",
+    "subtitle": "Common",
+    "value": "spray_pack",
+    "weight": 5,
+    "imageMode": "url",
+    "imageUrl": "https://example.com/assets/spray.png"
+  },
+  {
+    "label": "Rare Emote",
+    "subtitle": "Rare",
+    "value": "rare_emote",
+    "weight": 3,
+    "imageMode": "url",
+    "imageUrl": "https://example.com/assets/emote.png",
+    "accentColor": "#4ec9ff"
+  },
+  {
+    "label": "Streamer Token",
+    "subtitle": "Ultra Rare",
+    "value": "token",
+    "weight": 1,
+    "imageMode": "local",
+    "imageFile": "C:/firebot/assets/token.png",
+    "accentColor": "#ffd43b"
+  }
+]
