@@ -265,7 +265,7 @@ Returns information about the most recent selection.
    - Set overlay length (how long it stays visible)
    - Set build-up delay (animation before reveal)
    - Set showcase hold (how long to display winner)
-  4. Customize the visual style:
+4. Customize the visual style:
    - Set background gradient colors
    - Choose glow, accent, and text colors
    - Select font family
