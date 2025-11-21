@@ -42,7 +42,6 @@ export type LootBoxSettingType =
   | 'valueColor'
   | 'fontFamily'
   | 'hideBackground'
-  | 'showConfetti'
   | 'revealDelayMs'
   | 'revealHoldMs'
   | 'lengthSeconds'
@@ -86,7 +85,7 @@ export interface StyleSetting {
  * Boolean setting update
  */
 export interface BooleanSetting {
-  type: 'hideBackground' | 'showConfetti';
+  type: 'hideBackground';
   value: boolean;
 }
 
@@ -235,7 +234,6 @@ export interface LootBoxProps {
   fontFamily: string;
   revealDelayMs: number;
   revealHoldMs: number;
-  showConfetti: boolean;
   items: LootBoxItem[];
 }
 
@@ -295,7 +293,6 @@ export interface LootBoxManagerEffectModel {
   boxSubtitleColor?: string;
   boxValueColor?: string;
   boxFontFamily?: string;
-  boxShowConfetti?: boolean;
   
   // Individual setting updates
   setting?: SettingUpdate;

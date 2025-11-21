@@ -70,7 +70,6 @@ export const DEFAULT_LOOTBOX_PROPS: LootBoxProps = {
   fontFamily: "'Montserrat', sans-serif",
   revealDelayMs: 2200,
   revealHoldMs: 5200,
-  showConfetti: true,
   items: [],
 };
 

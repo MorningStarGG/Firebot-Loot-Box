@@ -417,13 +417,6 @@
                         type="number" model="effect.boxRevealHoldMs" placeholder="5200"
                         aria-label="Set reveal hold duration"></firebot-input>
 
-                    <label class="control-fb control--checkbox" aria-label="Toggle confetti burst effect"
-                        style="margin-top: 10px;">
-                        Confetti burst on reveal
-                        <input type="checkbox" ng-model="effect.boxShowConfetti">
-                        <div class="control__indicator"></div>
-                    </label>
-
                     <label class="control-fb control--checkbox" aria-label="Toggle background visibility"
                         style="margin-top: 10px;">
                         Hide overlay background
@@ -494,7 +487,6 @@
                             </optgroup>
                             <optgroup label="Display Options">
                                 <option value="hideBackground">Hide/Show Background</option>
-                                <option value="showConfetti">Show Confetti</option>
                             </optgroup>
                             <optgroup label="Timing">
                                 <option value="revealDelayMs">Reveal Delay (ms)</option>
@@ -565,13 +557,6 @@
                             </label>
                         </div>
 
-                        <div ng-switch-when="showConfetti">
-                            <label class="control-fb control--checkbox" aria-label="Toggle confetti effect">
-                                Show Confetti
-                                <input type="checkbox" ng-model="effect.setting.value">
-                                <div class="control__indicator"></div>
-                            </label>
-                        </div>
                         <!-- Numbers -->
                         <div ng-switch-when="revealDelayMs">
                             <firebot-input input-title="Reveal Delay (milliseconds)" type="number"

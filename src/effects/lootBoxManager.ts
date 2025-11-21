@@ -67,7 +67,6 @@ export function lootBoxManagerEffectType(
         fontFamily: "'Montserrat', sans-serif",
         revealDelayMs: 2200,
         revealHoldMs: 5200,
-        showConfetti: true,
       };
 
       const defaults: LootBoxManagerEffectModel = {
@@ -100,7 +99,6 @@ export function lootBoxManagerEffectType(
         boxSubtitleColor: UI_BOX_PROP_DEFAULTS.subtitleColor,
         boxValueColor: UI_BOX_PROP_DEFAULTS.valueColor,
         boxFontFamily: UI_BOX_PROP_DEFAULTS.fontFamily,
-        boxShowConfetti: UI_BOX_PROP_DEFAULTS.showConfetti,
       };
 
       $scope.effect = {
@@ -157,7 +155,6 @@ export function lootBoxManagerEffectType(
         fontFamily: UI_BOX_PROP_DEFAULTS.fontFamily,
         revealDelayMs: UI_BOX_PROP_DEFAULTS.revealDelayMs,
         revealHoldMs: UI_BOX_PROP_DEFAULTS.revealHoldMs,
-        showConfetti: UI_BOX_PROP_DEFAULTS.showConfetti,
       });
 
       const defaultOverlaySnapshot = () => ({
@@ -206,7 +203,6 @@ export function lootBoxManagerEffectType(
         $scope.effect.boxSubtitleColor = props.subtitleColor || "";
         $scope.effect.boxValueColor = props.valueColor || "";
         $scope.effect.boxFontFamily = props.fontFamily || "";
-        $scope.effect.boxShowConfetti = !!props.showConfetti;
         isApplyingBoxDetails = false;
       };
 
@@ -241,7 +237,6 @@ export function lootBoxManagerEffectType(
         $scope.effect.boxSubtitleColor = props.subtitleColor || "";
         $scope.effect.boxValueColor = props.valueColor || "";
         $scope.effect.boxFontFamily = props.fontFamily || "";
-        $scope.effect.boxShowConfetti = !!props.showConfetti;
         isApplyingBoxDetails = false;
       };
 
@@ -615,9 +610,6 @@ export function lootBoxManagerEffectType(
             case 'hideBackground':
               $scope.effect.setting.value = !!props.hideBackground;
               break;
-            case 'showConfetti':
-              $scope.effect.setting.value = !!props.showConfetti;
-              break;
             case 'revealDelayMs':
               $scope.effect.setting.value = props.revealDelayMs ?? 0;
               break;
@@ -889,7 +881,6 @@ export function lootBoxManagerEffectType(
                   break;
 
                 case 'hideBackground':
-                case 'showConfetti':
                   break;
 
                 case 'revealDelayMs':
@@ -1237,7 +1228,6 @@ export function lootBoxManagerEffectType(
                 textColor: event.effect.boxTextColor || "",
                 valueColor: event.effect.boxValueColor || "",
                 fontFamily: (event.effect.boxFontFamily || "").trim(),
-                showConfetti: !!event.effect.boxShowConfetti,
               };
 
               if (Number.isFinite(revealDelayValue) && revealDelayValue >= 0) {
@@ -1283,7 +1273,6 @@ export function lootBoxManagerEffectType(
                   break;
 
                 case 'hideBackground':
-                case 'showConfetti':
                   updates.props = { [settingType]: Boolean(settingValue) };
                   break;
 

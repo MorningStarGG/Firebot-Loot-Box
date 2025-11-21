@@ -91,7 +91,6 @@ export function overlayLootBoxEffectType(
           fontFamily: "'Montserrat', sans-serif",
           revealDelayMs: 2200,
           revealHoldMs: 5200,
-          showConfetti: true,
           items: [
             {
               label: "Mythic Blade",
@@ -186,10 +185,6 @@ export function overlayLootBoxEffectType(
 
       if (props.revealHoldMs == null) {
         $scope.effect.EventData.props.revealHoldMs = 5200;
-      }
-
-      if (props.showConfetti == null) {
-        $scope.effect.EventData.props.showConfetti = true;
       }
 
       $scope.ensureItemDefaults = (item: LootBoxItem) => {
@@ -328,7 +323,6 @@ export function overlayLootBoxEffectType(
         fontFamily: event.effect.EventData.props.fontFamily,
         revealDelayMs: Number(event.effect.EventData.props.revealDelayMs) || 2200,
         revealHoldMs: Number(event.effect.EventData.props.revealHoldMs) || 5200,
-        showConfetti: event.effect.EventData.props.showConfetti ?? true,
         items: [],
       };
 
@@ -644,28 +638,6 @@ export function overlayLootBoxEffectType(
                   return validItems[validItems.length - 1];
                 };
 
-                const ensureConfetti = (callback: () => void) => {
-                  if (!props.showConfetti) {
-                    return;
-                  }
-                  if (typeof (window as any).confetti === "function") {
-                    callback();
-                    return;
-                  }
-                  const scriptId = "msgg-confetti-lib";
-                  const existing = document.getElementById(scriptId) as HTMLScriptElement | null;
-                  if (existing) {
-                    existing.addEventListener("load", () => callback(), { once: true });
-                    return;
-                  }
-                  const script = document.createElement("script");
-                  script.id = scriptId;
-                  script.src = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js";
-                  script.async = true;
-                  script.addEventListener("load", () => callback(), { once: true });
-                  document.head.appendChild(script);
-                };
-
                 let selectedItem = event.selectedItem as LootBoxItem | undefined;
 
                 if (!selectedItem && props.items && props.items.length) {
@@ -784,50 +756,11 @@ export function overlayLootBoxEffectType(
                 queue(flashEnd, () => flashOverlay.classList.remove("flash"));
                 queue(openedTime, () => lootboxEl.classList.add("opened"));
 
-                const launchConfetti = () => {
-                  ensureConfetti(() => {
-                    const confettiFn = (window as any).confetti;
-                    if (typeof confettiFn !== "function") {
-                      return;
-                    }
-                    const defaults = {
-                      origin: { y: 0.7 },
-                      disableForReducedMotion: true,
-                    };
-                    const confettiColors = [
-                      rewardAccent,
-                      baseGlow,
-                      props.valueColor,
-                      accentLight,
-                      "#ffffff"
-                    ].filter(Boolean) as string[];
-                    confettiFn({
-                      ...defaults,
-                      particleCount: 70,
-                      spread: 65,
-                      startVelocity: 45,
-                      colors: confettiColors,
-                    });
-                    window.setTimeout(() => {
-                      confettiFn({
-                        ...defaults,
-                        particleCount: 45,
-                        spread: 120,
-                        startVelocity: 60,
-                        scalar: 0.9,
-                        ticks: 220,
-                        colors: confettiColors,
-                      });
-                    }, 220);
-                  });
-                };
-
                 const revealTimer = window.setTimeout(() => {
                   container.classList.add("msgg-open");
                   lootboxEl.classList.add("opened");
                   rewardDisplay.classList.add("show");
                   rewardCard.classList.add("active");
-                  launchConfetti();
                   rewardCard.style.borderColor = rewardAccent;
                   rewardCard.style.boxShadow = `0 32px 75px rgba(0,0,0,0.55), 0 0 65px ${rewardAccentStrong}, inset 0 0 35px rgba(255,255,255,0.08)`;
                   // @ts-ignore
