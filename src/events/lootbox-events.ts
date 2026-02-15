@@ -115,11 +115,7 @@ export const emitLootBoxOpened = async (
         await eventManager.triggerEvent(
             LOOTBOX_SOURCE_ID,
             LOOTBOX_OPENED_EVENT,
-            eventData,
-            {
-                isRepeatable: true,
-                skipCache: true
-            }
+            eventData
         );
 
         logger.info('Loot box opened event emitted successfully');
@@ -164,11 +160,7 @@ export const emitLootBoxItemWon = async (
         await eventManager.triggerEvent(
             LOOTBOX_SOURCE_ID,
             LOOTBOX_ITEM_WON_EVENT,
-            eventData,
-            {
-                isRepeatable: true,
-                skipCache: true
-            }
+            eventData
         );
 
         logger.info('Loot box item won event emitted successfully');
@@ -205,11 +197,7 @@ export const emitLootBoxEmpty = async (
         await eventManager.triggerEvent(
             LOOTBOX_SOURCE_ID,
             LOOTBOX_EMPTY_EVENT,
-            eventData,
-            {
-                isRepeatable: true,
-                skipCache: true
-            }
+            eventData
         );
 
         logger.info('Loot box empty event emitted successfully');
@@ -249,11 +237,7 @@ export const emitLootBoxItemDepleted = async (
         await eventManager.triggerEvent(
             LOOTBOX_SOURCE_ID,
             LOOTBOX_ITEM_DEPLETED_EVENT,
-            eventData,
-            {
-                isRepeatable: true,
-                skipCache: true
-            }
+            eventData
         );
 
         logger.info('Loot box item depleted event emitted successfully');
