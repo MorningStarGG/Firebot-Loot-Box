@@ -1,9 +1,10 @@
 import { ScriptModules } from "@crowbartools/firebot-custom-scripts-types";
-import { randomUUID } from "crypto";
+import { randomInt, randomUUID } from "crypto";
 import { logger } from "../logger";
 import {
   LootBoxInventoryItem,
   LootBoxInventoryView,
+  DrawMode,
   LootBoxItem,
   LootBoxOverlaySettings,
   LootBoxProps,
@@ -62,14 +63,29 @@ export const DEFAULT_LOOTBOX_PROPS: LootBoxProps = {
   backgroundGradientStart: "#090e36",
   backgroundGradientEnd: "#2a0c41",
   hideBackground: false,
+  showGiftBox: true,
+  showRewardPopup: true,
+  showItemContent: true,
+  drawMode: "random",
   glowColor: "#ff9f5a",
   accentColor: "#ff54d7",
   textColor: "#ffffff",
   subtitleColor: "#ffa94d",
   valueColor: "#ffe8a3",
+  popupBackgroundColor: "#0c0a20",
+  popupBorderColor: "#ff54d7",
+  popupGlowColor: "#ff54d7",
+  popupShineColor: "#ffffff",
+  boxBodyColor: "#ff54d7",
+  boxLidColor: "#ff54d7",
+  boxBorderColor: "#ff54d7",
+  boxBandColor: "#ffffff",
+  boxIconColor: "#ffffff",
+  boxShineColor: "#ffffff",
   fontFamily: "'Montserrat', sans-serif",
   revealDelayMs: 2200,
   revealHoldMs: 5200,
+  exitDurationMs: 1200,
   items: [],
 };
 
@@ -79,8 +95,8 @@ export const DEFAULT_OVERLAY_SETTINGS: LootBoxOverlaySettings = {
   overlayInstance: undefined,
 };
 
-const weightedSelect = (items: LootBoxInventoryItem[]): LootBoxInventoryItem | undefined => {
-  const valid = items.filter((item) => {
+const getValidSelectableItems = (items: LootBoxInventoryItem[]): LootBoxInventoryItem[] =>
+  items.filter((item) => {
     if (!item) {
       return false;
     }
@@ -94,20 +110,102 @@ const weightedSelect = (items: LootBoxInventoryItem[]): LootBoxInventoryItem | u
     return item.wins < item.maxWins;
   });
 
+const CRYPTO_RANDOM_SCALE = 0x100000000;
+
+const randomUnit = (): number => randomInt(CRYPTO_RANDOM_SCALE) / CRYPTO_RANDOM_SCALE;
+
+const gcd = (left: number, right: number): number => {
+  let a = Math.abs(left);
+  let b = Math.abs(right);
+  while (b) {
+    const next = a % b;
+    a = b;
+    b = next;
+  }
+  return a || 1;
+};
+
+const normalizeTicketWeights = (
+  items: LootBoxInventoryItem[],
+  weightModifier: (item: LootBoxInventoryItem) => number = () => 1
+): Array<{ item: LootBoxInventoryItem; tickets: number }> => {
+  const raw = items
+    .map((item) => {
+      const weight = Number(item.weight) || 0;
+      const modifier = weightModifier(item);
+      if (weight <= 0 || modifier <= 0) {
+        return { item, tickets: 0 };
+      }
+      return {
+        item,
+        tickets: Math.max(1, Math.round(weight * modifier * 1000)),
+      };
+    })
+    .filter((entry) => entry.tickets > 0);
+
+  if (!raw.length) {
+    return [];
+  }
+
+  const divisor = raw.reduce((current, entry) => gcd(current, entry.tickets), raw[0].tickets);
+  const reduced = raw.map((entry) => ({
+    item: entry.item,
+    tickets: Math.max(1, Math.floor(entry.tickets / divisor)),
+  }));
+
+  const total = reduced.reduce((sum, entry) => sum + entry.tickets, 0);
+  const maxTickets = 10000;
+  if (total <= maxTickets) {
+    return reduced;
+  }
+
+  return reduced.map((entry) => ({
+    item: entry.item,
+    tickets: Math.max(1, Math.round((entry.tickets / total) * maxTickets)),
+  }));
+};
+
+const weightedSelect = (
+  items: LootBoxInventoryItem[],
+  weightModifier?: (item: LootBoxInventoryItem) => number
+): LootBoxInventoryItem | undefined => {
+  const valid = getValidSelectableItems(items);
   if (!valid.length) {
     return undefined;
   }
 
-  const total = valid.reduce((sum, current) => sum + (Number(current.weight) || 1), 0);
-  let ticket = Math.random() * total;
-  for (const item of valid) {
-    ticket -= Number(item.weight) || 1;
-    if (ticket <= 0) {
-      return item;
-    }
+  const weighted = valid
+    .map((item) => {
+      const weight = Number(item.weight) || 0;
+      const modifier = weightModifier?.(item) ?? 1;
+      return {
+        item,
+        weight: weight > 0 && modifier > 0 ? weight * modifier : 0,
+      };
+    })
+    .filter((entry) => entry.weight > 0);
+
+  const total = weighted.reduce((sum, current) => sum + current.weight, 0);
+  if (total <= 0) {
+    return undefined;
   }
 
-  return valid[valid.length - 1];
+  let ticket = randomUnit() * total;
+  for (const entry of weighted) {
+    if (ticket < entry.weight) {
+      return entry.item;
+    }
+    ticket -= entry.weight;
+  }
+
+  return weighted[weighted.length - 1]?.item;
+};
+
+const normalizeDrawMode = (value: unknown): DrawMode => {
+  if (value === "shuffleBag" || value === "antiStreak" || value === "random") {
+    return value;
+  }
+  return "random";
 };
 
 export class LootBoxManager {
@@ -202,6 +300,7 @@ export class LootBoxManager {
       updatedAt: now,
       totalOpens: 0,
       overlaySettings: overrides?.overlaySettings || { ...DEFAULT_OVERLAY_SETTINGS },
+      drawState: {},
     };
 
     await this.writeRecord(record);
@@ -264,6 +363,16 @@ export class LootBoxManager {
     return Math.max(0, item.maxWins - item.wins);
   }
 
+  private clearShuffleBag(record: LootBoxRecord): void {
+    if (!record.drawState) {
+      return;
+    }
+    record.drawState = {
+      ...record.drawState,
+      shuffleBagItemIds: [],
+    };
+  }
+
   private async writeRecord(record: LootBoxRecord): Promise<void> {
     await this.ensureRoot();
     await this._db.push(`${ROOT_KEY}/${record.id}`, record, true);
@@ -312,6 +421,7 @@ export class LootBoxManager {
     const now = nowIso();
     const existing = await this.getLootBox(lootBoxId);
     const items = existing ? { ...existing.items } : {};
+    let resetShuffleBag = false;
 
     const incomingItems = options.items || [];
     const seenIds = new Set<string>();
@@ -329,13 +439,18 @@ export class LootBoxManager {
       const wins = current?.wins ?? 0;
       const adjustedWins =
         normalizedMaxWins === null ? wins : Math.min(wins, normalizedMaxWins);
+      const normalizedWeight = this.normalizeWeight(incoming.weight, current?.weight);
+
+      if (!current || current.weight !== normalizedWeight || current.maxWins !== normalizedMaxWins) {
+        resetShuffleBag = true;
+      }
 
       const updated: LootBoxInventoryItem = {
         id: itemId,
         label: (incoming.label ?? current?.label ?? "").trim(),
         value: incoming.value ?? current?.value ?? "",
         subtitle: incoming.subtitle ?? current?.subtitle,
-        weight: this.normalizeWeight(incoming.weight, current?.weight),
+        weight: normalizedWeight,
         maxWins: normalizedMaxWins,
         wins: adjustedWins,
         lastWonAt: current?.lastWonAt,
@@ -355,7 +470,9 @@ export class LootBoxManager {
       displayName: options.displayName || existing?.displayName || lootBoxId,
       source: options.source ?? existing?.source ?? "list",
       props: {
+        ...DEFAULT_LOOTBOX_PROPS,
         ...options.props,
+        drawMode: normalizeDrawMode(options.props.drawMode),
         items: [],
       },
       items,
@@ -365,6 +482,10 @@ export class LootBoxManager {
       lastSelectedItemId: existing?.lastSelectedItemId,
       totalOpens: existing?.totalOpens ?? 0,
       overlaySettings: options.overlaySettings ?? existing?.overlaySettings,
+      drawState: {
+        ...(existing?.drawState ?? {}),
+        shuffleBagItemIds: resetShuffleBag ? [] : existing?.drawState?.shuffleBagItemIds,
+      },
     };
 
     if (existing) {
@@ -404,6 +525,7 @@ export class LootBoxManager {
     };
 
     record.items[itemId] = newItem;
+    this.clearShuffleBag(record);
     record.updatedAt = now;
 
     await this.writeRecord(record);
@@ -425,6 +547,13 @@ export class LootBoxManager {
 
     if (record.lastSelectedItemId === sanitizedId) {
       record.lastSelectedItemId = undefined;
+    }
+
+    if (record.drawState) {
+      record.drawState = {
+        shuffleBagItemIds: (record.drawState.shuffleBagItemIds ?? []).filter((id) => id !== sanitizedId),
+        recentItemIds: (record.drawState.recentItemIds ?? []).filter((id) => id !== sanitizedId),
+      };
     }
 
     record.updatedAt = nowIso();
@@ -474,6 +603,7 @@ export class LootBoxManager {
     };
 
     record.items[sanitizedId] = updated;
+    this.clearShuffleBag(record);
     record.updatedAt = now;
     await this.writeRecord(record);
     return updated;
@@ -511,7 +641,7 @@ export class LootBoxManager {
 
   async updateTiming(
     lootBoxId: string,
-    updates: { lengthSeconds?: number; revealDelayMs?: number; revealHoldMs?: number }
+    updates: { lengthSeconds?: number; revealDelayMs?: number; revealHoldMs?: number; exitDurationMs?: number }
   ): Promise<LootBoxRecord | undefined> {
     const record = await this.getLootBox(lootBoxId);
     if (!record) {
@@ -531,7 +661,7 @@ export class LootBoxManager {
       changed = true;
     }
 
-    if (updates.revealDelayMs !== undefined || updates.revealHoldMs !== undefined) {
+    if (updates.revealDelayMs !== undefined || updates.revealHoldMs !== undefined || updates.exitDurationMs !== undefined) {
       const props = {
         ...DEFAULT_LOOTBOX_PROPS,
         ...(record.props || {}),
@@ -544,6 +674,10 @@ export class LootBoxManager {
       }
       if (updates.revealHoldMs !== undefined) {
         props.revealHoldMs = updates.revealHoldMs;
+        changed = true;
+      }
+      if (updates.exitDurationMs !== undefined) {
+        props.exitDurationMs = updates.exitDurationMs;
         changed = true;
       }
 
@@ -626,8 +760,12 @@ export class LootBoxManager {
             return;
           }
           if (typeof value === "string") {
-            if ((props as any)[key] !== value) {
-              (props as any)[key] = value;
+            const nextValue = key === "drawMode" ? normalizeDrawMode(value) : value;
+            if ((props as any)[key] !== nextValue) {
+              (props as any)[key] = nextValue;
+              if (key === "drawMode") {
+                this.clearShuffleBag(record);
+              }
               changed = true;
             }
           } else if (typeof value === "boolean") {
@@ -670,6 +808,7 @@ export class LootBoxManager {
 
     record.lastOpenedAt = undefined;
     record.lastSelectedItemId = undefined;
+    record.drawState = {};
     record.updatedAt = now;
 
     await this.writeRecord(record);
@@ -708,21 +847,107 @@ export class LootBoxManager {
     return Object.values(record.items).map((item) => toInventoryView(item));
   }
 
+  private buildShuffleBag(items: LootBoxInventoryItem[]): string[] {
+    const tickets = normalizeTicketWeights(items);
+    const bag: string[] = [];
+
+    tickets.forEach(({ item, tickets: itemTickets }) => {
+      for (let index = 0; index < itemTickets; index += 1) {
+        bag.push(item.id);
+      }
+    });
+
+    return bag;
+  }
+
+  private selectFromShuffleBag(
+    record: LootBoxRecord,
+    availableItems: LootBoxInventoryItem[]
+  ): LootBoxInventoryItem | undefined {
+    const availableById = new Map(availableItems.map((item) => [item.id, item]));
+    const state = record.drawState ?? {};
+    let bag = (state.shuffleBagItemIds ?? []).filter((itemId) => availableById.has(itemId));
+
+    if (!bag.length) {
+      bag = this.buildShuffleBag(availableItems);
+    }
+
+    if (!bag.length) {
+      return undefined;
+    }
+
+    const index = randomInt(bag.length);
+    const [selectedId] = bag.splice(index, 1);
+    record.drawState = {
+      ...state,
+      shuffleBagItemIds: bag,
+    };
+
+    return availableById.get(selectedId);
+  }
+
+  private selectAntiStreak(
+    record: LootBoxRecord,
+    availableItems: LootBoxInventoryItem[]
+  ): LootBoxInventoryItem | undefined {
+    const recentItemIds = record.drawState?.recentItemIds?.length
+      ? record.drawState.recentItemIds
+      : record.lastSelectedItemId
+        ? [record.lastSelectedItemId]
+        : [];
+
+    return weightedSelect(availableItems, (item) => {
+      const recentIndex = recentItemIds.indexOf(item.id);
+      if (recentIndex === 0) {
+        return 0.25;
+      }
+      if (recentIndex === 1) {
+        return 0.6;
+      }
+      if (recentIndex === 2) {
+        return 0.85;
+      }
+      return 1;
+    });
+  }
+
+  private selectItem(
+    record: LootBoxRecord,
+    availableItems: LootBoxInventoryItem[]
+  ): LootBoxInventoryItem | undefined {
+    const drawMode = normalizeDrawMode(record.props?.drawMode);
+
+    if (drawMode === "shuffleBag") {
+      return this.selectFromShuffleBag(record, availableItems);
+    }
+
+    if (drawMode === "antiStreak") {
+      return this.selectAntiStreak(record, availableItems);
+    }
+
+    return weightedSelect(availableItems);
+  }
+
+  private recordSelectionState(record: LootBoxRecord, selectedItemId: string): void {
+    const state = record.drawState ?? {};
+    const recentItemIds = [
+      selectedItemId,
+      ...(state.recentItemIds ?? []).filter((itemId) => itemId !== selectedItemId),
+    ].slice(0, 3);
+
+    record.drawState = {
+      ...state,
+      recentItemIds,
+    };
+  }
+
   async openLootBox(lootBoxId: string): Promise<LootBoxSelection | undefined> {
     const record = await this.getLootBox(lootBoxId);
     if (!record) {
       return undefined;
     }
 
-    const availableItems = Object.values(record.items).filter((item) => {
-      if (!item) {
-        return false;
-      }
-      if (item.maxWins === null) {
-        return (Number(item.weight) || 0) > 0;
-      }
-      return item.wins < item.maxWins && (Number(item.weight) || 0) > 0;
-    });
+    const availableItems = getValidSelectableItems(Object.values(record.items));
 
     if (!availableItems.length) {
       const totalItems = Object.keys(record.items).length;
@@ -747,7 +972,7 @@ export class LootBoxManager {
       return undefined;
     }
 
-    const selected = weightedSelect(availableItems);
+    const selected = this.selectItem(record, availableItems);
     if (!selected) {
       return undefined;
     }
@@ -768,6 +993,7 @@ export class LootBoxManager {
     record.lastSelectedItemId = updatedItem.id;
     record.updatedAt = now;
     record.totalOpens = (record.totalOpens ?? 0) + 1;
+    this.recordSelectionState(record, updatedItem.id);
 
     await this.writeRecord(record);
 

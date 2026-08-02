@@ -135,6 +135,19 @@ const script: Firebot.CustomScript<Params> = {
           ...(record.props || {}),
         };
         props.items = [];
+        const recordProps = record.props || {};
+        const accent = props.accentColor || DEFAULT_LOOTBOX_PROPS.accentColor;
+        ([
+          "popupBorderColor",
+          "popupGlowColor",
+          "boxBodyColor",
+          "boxLidColor",
+          "boxBorderColor",
+        ] as const).forEach((key) => {
+          if (!(key in recordProps) || !(recordProps as any)[key]) {
+            (props as any)[key] = accent;
+          }
+        });
         return {
           displayName: record.displayName || id,
           overlaySettings,
@@ -144,41 +157,37 @@ const script: Firebot.CustomScript<Params> = {
       "msgg-lootbox:getTiming": async ({ lootBoxId }: { lootBoxId: string }) => {
         if (!lootBoxManager) {
           return {
-            lengthSeconds: DEFAULT_OVERLAY_SETTINGS.lengthSeconds,
             revealDelayMs: DEFAULT_LOOTBOX_PROPS.revealDelayMs,
             revealHoldMs: DEFAULT_LOOTBOX_PROPS.revealHoldMs,
+            exitDurationMs: DEFAULT_LOOTBOX_PROPS.exitDurationMs,
           };
         }
         const id = sanitizeLootBoxId(lootBoxId || "");
         if (!id) {
           return {
-            lengthSeconds: DEFAULT_OVERLAY_SETTINGS.lengthSeconds,
             revealDelayMs: DEFAULT_LOOTBOX_PROPS.revealDelayMs,
             revealHoldMs: DEFAULT_LOOTBOX_PROPS.revealHoldMs,
+            exitDurationMs: DEFAULT_LOOTBOX_PROPS.exitDurationMs,
           };
         }
         const record = await lootBoxManager.getLootBox(id);
         if (!record) {
           return {
-            lengthSeconds: DEFAULT_OVERLAY_SETTINGS.lengthSeconds,
             revealDelayMs: DEFAULT_LOOTBOX_PROPS.revealDelayMs,
             revealHoldMs: DEFAULT_LOOTBOX_PROPS.revealHoldMs,
+            exitDurationMs: DEFAULT_LOOTBOX_PROPS.exitDurationMs,
           };
         }
 
-        const overlay = {
-          ...DEFAULT_OVERLAY_SETTINGS,
-          ...(record.overlaySettings || {}),
-        };
         const props = {
           ...DEFAULT_LOOTBOX_PROPS,
           ...(record.props || {}),
         };
 
         return {
-          lengthSeconds: overlay.lengthSeconds,
           revealDelayMs: props.revealDelayMs,
           revealHoldMs: props.revealHoldMs,
+          exitDurationMs: props.exitDurationMs,
         };
       },
     } as const;

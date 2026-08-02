@@ -15,7 +15,7 @@
                 radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.08), transparent 58%),
                 linear-gradient(160deg, var(--bg-start), var(--bg-end));
             opacity: 0;
-            transition: opacity 600ms ease;
+            transition: opacity var(--exit-duration, 600ms) ease;
             font-family: var(--font-family, 'Montserrat', sans-serif);
         }
 
@@ -23,8 +23,43 @@
             background: none;
         }
 
+        .msgg-lootbox-wrapper.msgg-hide-gift-box .lootbox-scene {
+            display: none;
+        }
+
+        .msgg-lootbox-wrapper.msgg-hide-reward-popup .reward-card {
+            padding: 0 !important;
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            overflow: visible;
+        }
+
+        .msgg-lootbox-wrapper.msgg-hide-reward-popup .reward-card.active {
+            animation: none !important;
+        }
+
+        .msgg-lootbox-wrapper.msgg-hide-reward-popup .reward-card::before,
+        .msgg-lootbox-wrapper.msgg-hide-reward-popup .reward-card::after,
+        .msgg-lootbox-wrapper.msgg-hide-reward-popup .reward-glow {
+            display: none;
+        }
+
+        .msgg-lootbox-wrapper.msgg-hide-item-content .reward-image,
+        .msgg-lootbox-wrapper.msgg-hide-item-content .reward-info {
+            display: none !important;
+        }
+
         .msgg-lootbox-wrapper.msgg-entered {
             opacity: 1;
+        }
+
+        .msgg-lootbox-wrapper.msgg-finale {
+            opacity: 0;
+        }
+
+        .msgg-lootbox-wrapper.msgg-finale .epic-stage {
+            transform: scale(0.96);
         }
 
         .epic-stage {
@@ -34,6 +69,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: transform var(--exit-duration, 600ms) ease;
         }
 
         .epic-backdrop {
@@ -93,8 +129,8 @@
             width: 100%;
             height: 68%;
             bottom: 0;
-            background: linear-gradient(145deg, var(--accent-light, var(--accent-color)), var(--accent-color) 55%, var(--accent-dark, var(--accent-color)));
-            border: 5px solid var(--accent-color);
+            background: linear-gradient(145deg, var(--box-body-light, var(--accent-light)), var(--box-body-color, var(--accent-color)) 55%, var(--box-body-dark, var(--accent-dark)));
+            border: 5px solid var(--box-border-color, var(--accent-color));
             border-radius: 30px;
             box-shadow:
                 0 35px 85px rgba(0, 0, 0, 0.78),
@@ -133,13 +169,13 @@
             left: -120%;
             width: 120%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+            background: linear-gradient(90deg, transparent, var(--box-shine-color-alpha, rgba(255, 255, 255, 0.45)), transparent);
             animation: shineMove 3.2s infinite;
         }
 
         .box-band {
             position: absolute;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.1));
+            background: linear-gradient(90deg, var(--box-band-strong, rgba(255, 255, 255, 0.7)), var(--box-band-soft, rgba(255, 255, 255, 0.1)));
             opacity: 0.45;
         }
 
@@ -165,8 +201,8 @@
             height: 36%;
             top: -4%;
             left: -4%;
-            background: linear-gradient(145deg, var(--accent-light, var(--accent-color)), var(--accent-color) 60%, var(--accent-dark, var(--accent-color)));
-            border: 5px solid var(--accent-color);
+            background: linear-gradient(145deg, var(--box-lid-light, var(--accent-light)), var(--box-lid-color, var(--accent-color)) 60%, var(--box-lid-dark, var(--accent-dark)));
+            border: 5px solid var(--box-border-color, var(--accent-color));
             border-radius: 30px 30px 12px 12px;
             transform-origin: bottom center;
             box-shadow:
@@ -181,8 +217,8 @@
 
         .lid-decoration {
             font-size: clamp(2.4rem, 3vw, 3.4rem);
-            color: rgba(255, 255, 255, 0.92);
-            filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.9));
+            color: var(--box-icon-color, rgba(255, 255, 255, 0.92));
+            filter: drop-shadow(0 0 18px var(--box-icon-glow, rgba(255, 255, 255, 0.9)));
             animation: lidGlow 2.6s ease-in-out infinite;
         }
 
@@ -260,11 +296,11 @@
             gap: clamp(18px, 3vw, 32px);
             padding: clamp(26px, 3vw, 36px);
             border-radius: 28px;
-            background: rgba(12, 10, 32, 0.88);
-            border: 3px solid var(--reward-accent, var(--accent-color));
+            background: var(--popup-background-color, rgba(12, 10, 32, 0.88));
+            border: 3px solid var(--popup-border-color, var(--reward-accent, var(--accent-color)));
             box-shadow:
                 0 32px 75px rgba(0, 0, 0, 0.55),
-                0 0 65px var(--reward-accent-strong, rgba(255, 255, 255, 0.35)),
+                0 0 65px var(--popup-glow-strong, var(--reward-accent-strong, rgba(255, 255, 255, 0.35))),
                 inset 0 0 35px rgba(255, 255, 255, 0.08);
             transform: translateY(40px) scale(0.85);
             opacity: 0;
@@ -284,7 +320,7 @@
             height: 500%;
             background: linear-gradient(90deg,
                     transparent,
-                    rgba(255, 255, 255, 0.25),
+                    var(--popup-shine-color-alpha, rgba(255, 255, 255, 0.25)),
                     transparent);
             transform: translate(-50%, -50%) rotate(45deg);
             animation: shineCard 3s infinite;
@@ -295,7 +331,7 @@
             position: absolute;
             inset: -12%;
             border-radius: inherit;
-            background: radial-gradient(circle, var(--reward-accent-alpha, rgba(255, 255, 255, 0.25)) 0%, transparent 70%);
+            background: radial-gradient(circle, var(--popup-glow-alpha, var(--reward-accent-alpha, rgba(255, 255, 255, 0.25))) 0%, transparent 70%);
             filter: blur(30px);
             opacity: 0.9;
             z-index: -1;
@@ -305,7 +341,7 @@
             position: absolute;
             inset: -35%;
             border-radius: inherit;
-            background: radial-gradient(circle, var(--reward-accent-alpha, rgba(255, 255, 255, 0.28)) 0%, transparent 70%);
+            background: radial-gradient(circle, var(--popup-glow-alpha, var(--reward-accent-alpha, rgba(255, 255, 255, 0.28))) 0%, transparent 70%);
             filter: blur(40px);
             opacity: 0.75;
             z-index: -2;
@@ -477,14 +513,14 @@
             100% {
                 box-shadow:
                     0 32px 75px rgba(0, 0, 0, 0.55),
-                    0 0 65px var(--reward-accent-strong, rgba(255, 255, 255, 0.35)),
+                    0 0 65px var(--popup-glow-strong, var(--reward-accent-strong, rgba(255, 255, 255, 0.35))),
                     inset 0 0 35px rgba(255, 255, 255, 0.08);
             }
 
             50% {
                 box-shadow:
                     0 40px 95px rgba(0, 0, 0, 0.6),
-                    0 0 95px var(--reward-accent-strong, rgba(255, 255, 255, 0.5)),
+                    0 0 95px var(--popup-glow-strong, var(--reward-accent-strong, rgba(255, 255, 255, 0.5))),
                     inset 0 0 45px rgba(255, 255, 255, 0.12);
             }
         }

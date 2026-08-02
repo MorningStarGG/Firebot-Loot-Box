@@ -401,28 +401,44 @@
                         model="effect.boxOverlayInstance" placeholder="Optional overlay instance"
                         aria-label="Set overlay instance name"></firebot-input>
 
-                    <firebot-input input-title="Overlay duration (ms)" style="margin-bottom: 10px;" type="number"
-                        model="effect.boxOverlayDurationMs" placeholder="2200"
-                        aria-label="Set overlay duration in milliseconds"></firebot-input>
-
-                    <firebot-input input-title="Overlay length (seconds)" style="margin-bottom: 10px;" type="number"
-                        model="effect.boxLengthSeconds" placeholder="15"
-                        aria-label="Set overlay visibility length in seconds"></firebot-input>
-
                     <firebot-input input-title="Build-up before reveal (ms)" style="margin-bottom: 10px;" type="number"
                         model="effect.boxRevealDelayMs" placeholder="2200"
                         aria-label="Set reveal delay"></firebot-input>
 
-                    <firebot-input input-title="Showcase hold after reveal (ms)" style="margin-bottom: 10px;"
-                        type="number" model="effect.boxRevealHoldMs" placeholder="5200"
+                    <firebot-input input-title="Reward hold time (ms)" style="margin-bottom: 10px;" type="number"
+                        model="effect.boxRevealHoldMs" placeholder="5200"
                         aria-label="Set reveal hold duration"></firebot-input>
 
-                    <label class="control-fb control--checkbox" aria-label="Toggle background visibility"
-                        style="margin-top: 10px;">
-                        Hide overlay background
-                        <input type="checkbox" ng-model="effect.boxHideBackground">
-                        <div class="control__indicator"></div>
-                    </label>
+                    <firebot-input input-title="Exit fade time (ms)" style="margin-bottom: 10px;" type="number"
+                        model="effect.boxExitDurationMs" placeholder="1200"
+                        aria-label="Set exit fade duration"></firebot-input>
+
+                    <div class="input-group" style="margin-bottom: 10px;">
+                        <span class="input-group-addon" id="boxDrawModeLabel">Draw Mode</span>
+                        <select class="form-control" ng-model="effect.boxDrawMode" aria-labelledby="boxDrawModeLabel">
+                            <option value="random">Random</option>
+                            <option value="shuffleBag">Shuffle Bag</option>
+                            <option value="antiStreak">Anti-Streak</option>
+                        </select>
+                    </div>
+
+                    <div class="controls-fb-inline" style="margin-top: 10px;">
+                        <label class="control-fb control--checkbox" aria-label="Toggle gift box visibility">
+                            Show gift box
+                            <input type="checkbox" ng-model="effect.boxShowGiftBox">
+                            <div class="control__indicator"></div>
+                        </label>
+                        <label class="control-fb control--checkbox" aria-label="Toggle reward popup visibility">
+                            Show reward popup
+                            <input type="checkbox" ng-model="effect.boxShowRewardPopup">
+                            <div class="control__indicator"></div>
+                        </label>
+                        <label class="control-fb control--checkbox" aria-label="Toggle item content visibility">
+                            Show item content
+                            <input type="checkbox" ng-model="effect.boxShowItemContent">
+                            <div class="control__indicator"></div>
+                        </label>
+                    </div>
 
                     <div class="row" style="margin-top: 15px;">
                         <div class="col-md-6">
@@ -459,6 +475,62 @@
                         </div>
                     </div>
 
+                    <label style="font-weight:600; margin-top: 10px;">Popup colors</label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxPopupBackgroundColor" label="Popup BG"
+                                    aria-label="Select popup background color"></color-picker-input>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxPopupGlowColor" label="Popup Glow"
+                                    aria-label="Select popup glow color"></color-picker-input>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxPopupBorderColor" label="Popup Border"
+                                    aria-label="Select popup border color"></color-picker-input>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxPopupShineColor" label="Popup Shine"
+                                    aria-label="Select popup shine color"></color-picker-input>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label style="font-weight:600; margin-top: 10px;">Gift box colors</label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxBodyColor" label="Box Body"
+                                    aria-label="Select gift box body color"></color-picker-input>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxBorderColor" label="Box Border"
+                                    aria-label="Select gift box border color"></color-picker-input>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxIconColor" label="Box Icon"
+                                    aria-label="Select gift box icon color"></color-picker-input>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxLidColor" label="Box Lid"
+                                    aria-label="Select gift box lid color"></color-picker-input>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxBandColor" label="Box Band"
+                                    aria-label="Select gift box band color"></color-picker-input>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <color-picker-input model="effect.boxShineColor" label="Box Shine"
+                                    aria-label="Select gift box shine color"></color-picker-input>
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="margin-top: 10px;">
                         <div class="input-group">
                             <span class="input-group-addon" id="boxFontFamilyLabel">Headline font</span>
@@ -467,6 +539,12 @@
                                 <option ng-repeat="font in fontOptions" value="{{font}}">{{font}}</option>
                             </select>
                         </div>
+                        <label class="control-fb control--checkbox" aria-label="Toggle background visibility"
+                            style="margin-top: 10px;">
+                            Hide overlay background
+                            <input type="checkbox" ng-model="effect.boxHideBackground">
+                            <div class="control__indicator"></div>
+                        </label>
                     </div>
                 </div>
                 <!-- Manual Mode -->
@@ -483,16 +561,29 @@
                                 <option value="textColor">Text Color</option>
                                 <option value="subtitleColor">Subtitle Color</option>
                                 <option value="valueColor">Value/Subtitle Color</option>
+                                <option value="popupBackgroundColor">Popup Background Color</option>
+                                <option value="popupBorderColor">Popup Border Color</option>
+                                <option value="popupGlowColor">Popup Glow Color</option>
+                                <option value="popupShineColor">Popup Shine Color</option>
+                                <option value="boxBodyColor">Gift Box Body Color</option>
+                                <option value="boxLidColor">Gift Box Lid Color</option>
+                                <option value="boxBorderColor">Gift Box Border Color</option>
+                                <option value="boxBandColor">Gift Box Band Color</option>
+                                <option value="boxIconColor">Gift Box Icon Color</option>
+                                <option value="boxShineColor">Gift Box Shine Color</option>
                                 <option value="fontFamily">Font Family</option>
                             </optgroup>
                             <optgroup label="Display Options">
                                 <option value="hideBackground">Hide/Show Background</option>
+                                <option value="showGiftBox">Show Gift Box</option>
+                                <option value="showRewardPopup">Show Reward Popup</option>
+                                <option value="showItemContent">Show Item Content</option>
+                                <option value="drawMode">Draw Mode</option>
                             </optgroup>
                             <optgroup label="Timing">
                                 <option value="revealDelayMs">Reveal Delay (ms)</option>
-                                <option value="revealHoldMs">Reveal Hold (ms)</option>
-                                <option value="lengthSeconds">Overlay Length (seconds)</option>
-                                <option value="durationMs">Overlay Duration (ms)</option>
+                                <option value="revealHoldMs">Reward Hold (ms)</option>
+                                <option value="exitDurationMs">Exit Fade (ms)</option>
                             </optgroup>
                             <optgroup label="Other">
                                 <option value="displayName">Display Name</option>
@@ -538,6 +629,56 @@
                             <color-picker-input model="effect.setting.value" label="Value Color"
                                 aria-label="Select value color"></color-picker-input>
                         </div>
+
+                        <div ng-switch-when="popupBackgroundColor">
+                            <color-picker-input model="effect.setting.value" label="Popup Background"
+                                aria-label="Select popup background color"></color-picker-input>
+                        </div>
+
+                        <div ng-switch-when="popupBorderColor">
+                            <color-picker-input model="effect.setting.value" label="Popup Border"
+                                aria-label="Select popup border color"></color-picker-input>
+                        </div>
+
+                        <div ng-switch-when="popupGlowColor">
+                            <color-picker-input model="effect.setting.value" label="Popup Glow"
+                                aria-label="Select popup glow color"></color-picker-input>
+                        </div>
+
+                        <div ng-switch-when="popupShineColor">
+                            <color-picker-input model="effect.setting.value" label="Popup Shine"
+                                aria-label="Select popup shine color"></color-picker-input>
+                        </div>
+
+                        <div ng-switch-when="boxBodyColor">
+                            <color-picker-input model="effect.setting.value" label="Gift Box Body"
+                                aria-label="Select gift box body color"></color-picker-input>
+                        </div>
+
+                        <div ng-switch-when="boxLidColor">
+                            <color-picker-input model="effect.setting.value" label="Gift Box Lid"
+                                aria-label="Select gift box lid color"></color-picker-input>
+                        </div>
+
+                        <div ng-switch-when="boxBorderColor">
+                            <color-picker-input model="effect.setting.value" label="Gift Box Border"
+                                aria-label="Select gift box border color"></color-picker-input>
+                        </div>
+
+                        <div ng-switch-when="boxBandColor">
+                            <color-picker-input model="effect.setting.value" label="Gift Box Band"
+                                aria-label="Select gift box band color"></color-picker-input>
+                        </div>
+
+                        <div ng-switch-when="boxIconColor">
+                            <color-picker-input model="effect.setting.value" label="Gift Box Icon"
+                                aria-label="Select gift box icon color"></color-picker-input>
+                        </div>
+
+                        <div ng-switch-when="boxShineColor">
+                            <color-picker-input model="effect.setting.value" label="Gift Box Shine"
+                                aria-label="Select gift box shine color"></color-picker-input>
+                        </div>
                         <!-- Font Family -->
                         <div ng-switch-when="fontFamily">
                             <div class="input-group">
@@ -548,10 +689,46 @@
                                 </select>
                             </div>
                         </div>
+
+                        <div ng-switch-when="drawMode">
+                            <div class="input-group">
+                                <span class="input-group-addon" id="drawModeSettingLabel">Draw Mode</span>
+                                <select class="form-control" ng-model="effect.setting.value"
+                                    aria-labelledby="drawModeSettingLabel">
+                                    <option value="random">Random</option>
+                                    <option value="shuffleBag">Shuffle Bag</option>
+                                    <option value="antiStreak">Anti-Streak</option>
+                                </select>
+                            </div>
+                        </div>
                         <!-- Booleans -->
                         <div ng-switch-when="hideBackground">
                             <label class="control-fb control--checkbox" aria-label="Toggle background visibility">
                                 Hide Background
+                                <input type="checkbox" ng-model="effect.setting.value">
+                                <div class="control__indicator"></div>
+                            </label>
+                        </div>
+
+                        <div ng-switch-when="showGiftBox">
+                            <label class="control-fb control--checkbox" aria-label="Toggle gift box visibility">
+                                Show Gift Box
+                                <input type="checkbox" ng-model="effect.setting.value">
+                                <div class="control__indicator"></div>
+                            </label>
+                        </div>
+
+                        <div ng-switch-when="showRewardPopup">
+                            <label class="control-fb control--checkbox" aria-label="Toggle reward popup visibility">
+                                Show Reward Popup
+                                <input type="checkbox" ng-model="effect.setting.value">
+                                <div class="control__indicator"></div>
+                            </label>
+                        </div>
+
+                        <div ng-switch-when="showItemContent">
+                            <label class="control-fb control--checkbox" aria-label="Toggle item content visibility">
+                                Show Item Content
                                 <input type="checkbox" ng-model="effect.setting.value">
                                 <div class="control__indicator"></div>
                             </label>
@@ -570,16 +747,10 @@
                                 aria-label="Enter reveal hold in milliseconds"></firebot-input>
                         </div>
 
-                        <div ng-switch-when="lengthSeconds">
-                            <firebot-input input-title="Overlay Length (seconds)" type="number"
-                                model="effect.setting.value" placeholder="15"
-                                aria-label="Enter overlay length in seconds"></firebot-input>
-                        </div>
-
-                        <div ng-switch-when="durationMs">
-                            <firebot-input input-title="Overlay Duration (milliseconds)" type="number"
-                                model="effect.setting.value" placeholder="2200"
-                                aria-label="Enter overlay duration in milliseconds"></firebot-input>
+                        <div ng-switch-when="exitDurationMs">
+                            <firebot-input input-title="Exit Fade (milliseconds)" type="number"
+                                model="effect.setting.value" placeholder="1200"
+                                aria-label="Enter exit fade in milliseconds"></firebot-input>
                         </div>
                         <!-- Strings -->
                         <div ng-switch-when="displayName">

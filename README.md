@@ -14,6 +14,7 @@ A comprehensive and feature-rich loot box system for Firebot, designed to provid
   - Variable-based item loading for dynamic content
 - Persistent database storage for inventory tracking
 - Automatic item selection with weighted probability
+- Draw modes: Random, Shuffle Bag, and Anti-Streak
 - Stock management with max wins limits
 - Multiple loot box support with unique IDs
 - Reset functionality to restore all items to full stock
@@ -50,10 +51,13 @@ A comprehensive and feature-rich loot box system for Firebot, designed to provid
 ### Visual Customization
 - Custom background gradient (start and end colors)
 - Optional background hiding for green screen
+- Separate toggles for gift box, reward popup/card, and item content
 - Custom glow color for effects
 - Custom accent color for boxes
 - Custom text color for item names
 - Custom value/subtitle color
+- Custom popup background, border, glow, and shine colors
+- Custom gift box body, lid, border, band, icon, and shine colors
 - Custom item shadow color
 - Custom font family selection:
   - Montserrat (default)
@@ -64,10 +68,10 @@ A comprehensive and feature-rich loot box system for Firebot, designed to provid
   - Work Sans
 
 ### Timing Controls
-- **Overlay Length** - Total time the overlay stays visible (seconds)
 - **Build-up Delay** - Animation time before reveal (milliseconds)
-- **Showcase Hold** - Display time after reveal (milliseconds)
-- **Confetti Toggle** - Enable/disable celebration effects
+- **Reward Hold** - Display time after reveal (milliseconds)
+- **Exit Fade** - Fade-out time after the reward hold ends (milliseconds)
+- Total overlay lifetime is calculated automatically from build-up + reward hold + exit fade
 
 ### Positioning
 - Custom positioning support
@@ -128,11 +132,16 @@ The system includes cinematic animations for:
 - Automatic cleanup of expired selections
 
 ### Weighted Selection
-- Probability-based item selection
+- Crypto-backed probability-based item selection
 - Weight multiplier support (higher = more likely)
 - Automatic filtering of depleted items
 - Minimum weight enforcement (must be > 0)
 - Fallback to last valid item if selection fails
+
+### Draw Modes
+- **Random** - Default weighted random draw using `crypto.randomInt()` for manager selection.
+- **Shuffle Bag** - Builds a weighted bag and draws without replacement until the bag is empty, then refills.
+- **Anti-Streak** - Keeps weighted random behavior but temporarily reduces odds for recently won items.
 
 ### Effect Outputs
 The Advanced Loot Box Manager provides:
@@ -244,8 +253,10 @@ Returns information about the most recent selection.
 **Examples:**
 - `$lootBoxLastSelection[grand_prize]` - Item label (default)
 - `$lootBoxLastSelection[grand_prize, id]` - Item ID
+- `$lootBoxLastSelection[grand_prize, subtitle]` - Item subtitle
+- `$lootBoxLastSelection[grand_prize, fulltitle]` - Item label and subtitle with a space and no separator
 - `$lootBoxLastSelection[grand_prize, value]` - Item value
-- `$lootBoxLastSelection[grand_prize, id, label, value]` - All info
+- `$lootBoxLastSelection[grand_prize, id, label, subtitle, value]` - All info
 - `$lootBoxLastSelection[grand_prize, raw]` - Raw object
 
 ### Variable Display Options
@@ -306,7 +317,7 @@ Configure items directly in the overlay effect, which will:
 2. Test visibility and positioning before going live
 3. Use variables for dynamic loot box creation
 4. Set appropriate max wins to prevent item depletion
-5. Use weights to control rarity (1 = common, higher = rarer)
+5. Use weights to control chance (1 = baseline, higher = more likely)
 6. Organize items by rarity using accent colors
 7. Consider overlay layout when positioning boxes
 8. Use subtitle field for rarity tags (Epic, Legendary, etc.)

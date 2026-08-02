@@ -20,7 +20,8 @@ export type OptionAliasMap = Record<string, string | string[]>;
 
 export type ImageMode = "url" | "local";
 export type StockOperation = "add" | "subtract";
-export type TimingField = "lengthSeconds" | "revealDelayMs" | "revealHoldMs";
+export type TimingField = "revealDelayMs" | "revealHoldMs" | "exitDurationMs";
+export type DrawMode = "random" | "shuffleBag" | "antiStreak";
 export type NullableNumber = number | null;
 export type Numberish = number | string;
 export type NullableNumberish = Numberish | null;
@@ -40,10 +41,25 @@ export type LootBoxSettingType =
   | 'textColor'
   | 'subtitleColor'
   | 'valueColor'
+  | 'popupBackgroundColor'
+  | 'popupBorderColor'
+  | 'popupGlowColor'
+  | 'popupShineColor'
+  | 'boxBodyColor'
+  | 'boxLidColor'
+  | 'boxBorderColor'
+  | 'boxBandColor'
+  | 'boxIconColor'
+  | 'boxShineColor'
   | 'fontFamily'
   | 'hideBackground'
+  | 'showGiftBox'
+  | 'showRewardPopup'
+  | 'showItemContent'
+  | 'drawMode'
   | 'revealDelayMs'
   | 'revealHoldMs'
+  | 'exitDurationMs'
   | 'lengthSeconds'
   | 'durationMs'
   | 'overlayInstance'
@@ -77,7 +93,10 @@ export type ItemSettingUpdate = ItemStringSetting | ItemNumberSetting | ItemNull
  */
 export interface StyleSetting {
   type: 'backgroundGradientStart' | 'backgroundGradientEnd' | 'glowColor' | 
-        'accentColor' | 'textColor' | 'subtitleColor' | 'valueColor';
+        'accentColor' | 'textColor' | 'subtitleColor' | 'valueColor' |
+        'popupBackgroundColor' | 'popupBorderColor' | 'popupGlowColor' | 'popupShineColor' |
+        'boxBodyColor' | 'boxLidColor' | 'boxBorderColor' | 'boxBandColor' |
+        'boxIconColor' | 'boxShineColor';
   value: string;
 }
 
@@ -85,7 +104,7 @@ export interface StyleSetting {
  * Boolean setting update
  */
 export interface BooleanSetting {
-  type: 'hideBackground';
+  type: 'hideBackground' | 'showGiftBox' | 'showRewardPopup' | 'showItemContent';
   value: boolean;
 }
 
@@ -93,7 +112,7 @@ export interface BooleanSetting {
  * Number setting update
  */
 export interface NumberSetting {
-  type: 'revealDelayMs' | 'revealHoldMs' | 'lengthSeconds' | 'durationMs';
+  type: 'revealDelayMs' | 'revealHoldMs' | 'exitDurationMs' | 'lengthSeconds' | 'durationMs';
   value: number;
 }
 
@@ -101,7 +120,7 @@ export interface NumberSetting {
  * String setting update
  */
 export interface StringSetting {
-  type: 'fontFamily' | 'overlayInstance' | 'displayName';
+  type: 'fontFamily' | 'overlayInstance' | 'displayName' | 'drawMode';
   value: string;
 }
 
@@ -214,6 +233,12 @@ export interface LootBoxRecord {
   lastSelectedItemId?: string;
   totalOpens: number;
   overlaySettings?: LootBoxOverlaySettings;
+  drawState?: LootBoxDrawState;
+}
+
+export interface LootBoxDrawState {
+  shuffleBagItemIds?: string[];
+  recentItemIds?: string[];
 }
 
 export interface LootBoxSelection {
@@ -226,14 +251,29 @@ export interface LootBoxProps {
   backgroundGradientStart: string;
   backgroundGradientEnd: string;
   hideBackground: boolean;
+  showGiftBox: boolean;
+  showRewardPopup: boolean;
+  showItemContent: boolean;
+  drawMode: DrawMode;
   glowColor: string;
   accentColor: string;
   textColor: string;
   subtitleColor: string;
   valueColor: string;
+  popupBackgroundColor: string;
+  popupBorderColor: string;
+  popupGlowColor: string;
+  popupShineColor: string;
+  boxBodyColor: string;
+  boxLidColor: string;
+  boxBorderColor: string;
+  boxBandColor: string;
+  boxIconColor: string;
+  boxShineColor: string;
   fontFamily: string;
   revealDelayMs: number;
   revealHoldMs: number;
+  exitDurationMs: number;
   items: LootBoxItem[];
 }
 
@@ -284,14 +324,29 @@ export interface LootBoxManagerEffectModel {
   boxLengthSeconds?: Numberish;
   boxRevealDelayMs?: Numberish;
   boxRevealHoldMs?: Numberish;
+  boxExitDurationMs?: Numberish;
   boxBackgroundGradientStart?: string;
   boxBackgroundGradientEnd?: string;
   boxHideBackground?: boolean;
+  boxShowGiftBox?: boolean;
+  boxShowRewardPopup?: boolean;
+  boxShowItemContent?: boolean;
+  boxDrawMode?: DrawMode;
   boxGlowColor?: string;
   boxAccentColor?: string;
   boxTextColor?: string;
   boxSubtitleColor?: string;
   boxValueColor?: string;
+  boxPopupBackgroundColor?: string;
+  boxPopupBorderColor?: string;
+  boxPopupGlowColor?: string;
+  boxPopupShineColor?: string;
+  boxBodyColor?: string;
+  boxLidColor?: string;
+  boxBorderColor?: string;
+  boxBandColor?: string;
+  boxIconColor?: string;
+  boxShineColor?: string;
   boxFontFamily?: string;
   
   // Individual setting updates

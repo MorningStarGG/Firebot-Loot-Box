@@ -2,13 +2,20 @@ import { Firebot, ScriptModules } from "@crowbartools/firebot-custom-scripts-typ
 import { randomUUID } from "crypto";
 import { logger } from "../logger";
 import { webServer } from "../main";
-import { EventData, EV, LootBoxItem, LootBoxProps, EffectModel } from "../types/types";
+import { DrawMode, EventData, EV, LootBoxItem, LootBoxProps, EffectModel } from "../types/types";
 import { lootBoxManager, sanitizeLootBoxId } from "../utility/lootbox-manager";
 import effectTemplate from "../templates/lootBox-template.html";
 
 const fs = require("fs");
 
 const DEFAULT_LENGTH_SECONDS = 15;
+
+const normalizeDrawMode = (value: unknown): DrawMode => {
+  if (value === "shuffleBag" || value === "antiStreak" || value === "random") {
+    return value;
+  }
+  return "random";
+};
 
 export function overlayLootBoxEffectType(
   request: any,
@@ -83,14 +90,29 @@ export function overlayLootBoxEffectType(
           backgroundGradientStart: "#090e36",
           backgroundGradientEnd: "#2a0c41",
           hideBackground: false,
+          showGiftBox: true,
+          showRewardPopup: true,
+          showItemContent: true,
+          drawMode: "random",
           glowColor: "#ff9f5a",
           accentColor: "#ff54d7",
           textColor: "#ffffff",
           subtitleColor: "#ffa94d",
           valueColor: "#ffe8a3",
+          popupBackgroundColor: "#0c0a20",
+          popupBorderColor: "#ff54d7",
+          popupGlowColor: "#ff54d7",
+          popupShineColor: "#ffffff",
+          boxBodyColor: "#ff54d7",
+          boxLidColor: "#ff54d7",
+          boxBorderColor: "#ff54d7",
+          boxBandColor: "#ffffff",
+          boxIconColor: "#ffffff",
+          boxShineColor: "#ffffff",
           fontFamily: "'Montserrat', sans-serif",
           revealDelayMs: 2200,
           revealHoldMs: 5200,
+          exitDurationMs: 1200,
           items: [
             {
               label: "Mythic Blade",
@@ -155,6 +177,22 @@ export function overlayLootBoxEffectType(
         $scope.effect.EventData.props.hideBackground = false;
       }
 
+      if (props.showGiftBox == null) {
+        $scope.effect.EventData.props.showGiftBox = true;
+      }
+
+      if (props.showRewardPopup == null) {
+        $scope.effect.EventData.props.showRewardPopup = true;
+      }
+
+      if (props.showItemContent == null) {
+        $scope.effect.EventData.props.showItemContent = true;
+      }
+
+      if (!props.drawMode) {
+        $scope.effect.EventData.props.drawMode = "random";
+      }
+
       if (props.glowColor == null) {
         $scope.effect.EventData.props.glowColor = "#ff9f5a";
       }
@@ -175,6 +213,46 @@ export function overlayLootBoxEffectType(
         $scope.effect.EventData.props.valueColor = "#ffe8a3";
       }
 
+      if (props.popupBackgroundColor == null) {
+        $scope.effect.EventData.props.popupBackgroundColor = "#0c0a20";
+      }
+
+      if (props.popupBorderColor == null) {
+        $scope.effect.EventData.props.popupBorderColor = props.accentColor || "#ff54d7";
+      }
+
+      if (props.popupGlowColor == null) {
+        $scope.effect.EventData.props.popupGlowColor = props.accentColor || "#ff54d7";
+      }
+
+      if (props.popupShineColor == null) {
+        $scope.effect.EventData.props.popupShineColor = "#ffffff";
+      }
+
+      if (props.boxBodyColor == null) {
+        $scope.effect.EventData.props.boxBodyColor = props.accentColor || "#ff54d7";
+      }
+
+      if (props.boxLidColor == null) {
+        $scope.effect.EventData.props.boxLidColor = props.accentColor || "#ff54d7";
+      }
+
+      if (props.boxBorderColor == null) {
+        $scope.effect.EventData.props.boxBorderColor = props.accentColor || "#ff54d7";
+      }
+
+      if (props.boxBandColor == null) {
+        $scope.effect.EventData.props.boxBandColor = "#ffffff";
+      }
+
+      if (props.boxIconColor == null) {
+        $scope.effect.EventData.props.boxIconColor = "#ffffff";
+      }
+
+      if (props.boxShineColor == null) {
+        $scope.effect.EventData.props.boxShineColor = "#ffffff";
+      }
+
       if (!props.fontFamily) {
         $scope.effect.EventData.props.fontFamily = "'Montserrat', sans-serif";
       }
@@ -185,6 +263,10 @@ export function overlayLootBoxEffectType(
 
       if (props.revealHoldMs == null) {
         $scope.effect.EventData.props.revealHoldMs = 5200;
+      }
+
+      if (props.exitDurationMs == null) {
+        $scope.effect.EventData.props.exitDurationMs = 1200;
       }
 
       $scope.ensureItemDefaults = (item: LootBoxItem) => {
@@ -206,6 +288,23 @@ export function overlayLootBoxEffectType(
         props.items.forEach($scope.ensureItemDefaults);
       }
 
+      $scope.editor = {
+        openSection: "basic",
+        expandedItems: {} as Record<number, boolean>,
+      };
+
+      $scope.setOpenSection = (section: string) => {
+        $scope.editor.openSection = section;
+      };
+
+      $scope.isSectionOpen = (section: string): boolean => $scope.editor.openSection === section;
+
+      $scope.toggleItemAtIndex = (index: number) => {
+        $scope.editor.expandedItems[index] = !$scope.editor.expandedItems[index];
+      };
+
+      $scope.isItemExpanded = (index: number): boolean => !!$scope.editor.expandedItems[index];
+
       $scope.addLootBoxItem = () => {
         $scope.effect.EventData.props.items.push({
           label: "",
@@ -217,11 +316,23 @@ export function overlayLootBoxEffectType(
           imageUrl: "",
           accentColor: "",
         });
+        $scope.setOpenSection("items");
+        $scope.editor.expandedItems[$scope.effect.EventData.props.items.length - 1] = true;
       };
 
       $scope.removeLootBoxItemAtIndex = (index: number) => {
         if (index > -1) {
+          const expandedItems = $scope.editor.expandedItems || {};
           $scope.effect.EventData.props.items.splice(index, 1);
+          const nextExpandedItems: Record<number, boolean> = {};
+          Object.keys(expandedItems).forEach((key) => {
+            const currentIndex = Number(key);
+            if (!Number.isFinite(currentIndex) || currentIndex === index || !expandedItems[currentIndex]) {
+              return;
+            }
+            nextExpandedItems[currentIndex > index ? currentIndex - 1 : currentIndex] = true;
+          });
+          $scope.editor.expandedItems = nextExpandedItems;
         }
       };
 
@@ -250,15 +361,30 @@ export function overlayLootBoxEffectType(
           .replace(/^-+|-+$/g, "");
       };
 
-      if (effect.length == null || effect.length <= 0) {
-        errors.push("Please enter a duration (seconds) for how long the overlay should stay active.");
-      }
-
       if (!effect.lootBoxId || !sanitizeLootBoxId(effect.lootBoxId)) {
         errors.push("Enter a Loot Box ID using letters, numbers, hyphens, or underscores to link with the manager.");
       }
 
       const props = effect.EventData?.props as LootBoxProps | undefined;
+
+      const revealDelay = Number(props?.revealDelayMs);
+      if (!Number.isFinite(revealDelay) || revealDelay < 0) {
+        errors.push("Build-up before reveal must be zero or greater.");
+      }
+
+      const revealHold = Number(props?.revealHoldMs);
+      if (!Number.isFinite(revealHold) || revealHold < 0) {
+        errors.push("Reward hold time must be zero or greater.");
+      }
+
+      const exitDuration = Number(props?.exitDurationMs);
+      if (!Number.isFinite(exitDuration) || exitDuration < 0) {
+        errors.push("Exit fade time must be zero or greater.");
+      }
+
+      if (!["random", "shuffleBag", "antiStreak"].includes(String(props?.drawMode || ""))) {
+        errors.push("Select a draw mode.");
+      }
 
       if (effect.fileOrList === "list" && (!props?.items || props.items.length === 0)) {
         errors.push("Add at least one loot item or switch to file/variable mode.");
@@ -310,19 +436,41 @@ export function overlayLootBoxEffectType(
       }
 
       const hideBackground = event.effect.EventData.props.hideBackground === true;
+      const toNonNegativeMs = (value: unknown, fallback: number): number => {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric) || numeric < 0) {
+          return fallback;
+        }
+        return Math.floor(numeric);
+      };
 
       const baseProps: LootBoxProps = {
         backgroundGradientStart: event.effect.EventData.props.backgroundGradientStart,
         backgroundGradientEnd: event.effect.EventData.props.backgroundGradientEnd,
         hideBackground,
+        showGiftBox: event.effect.EventData.props.showGiftBox !== false,
+        showRewardPopup: event.effect.EventData.props.showRewardPopup !== false,
+        showItemContent: event.effect.EventData.props.showItemContent !== false,
+        drawMode: normalizeDrawMode(event.effect.EventData.props.drawMode),
         glowColor: event.effect.EventData.props.glowColor,
         accentColor: event.effect.EventData.props.accentColor,
         textColor: event.effect.EventData.props.textColor,
         subtitleColor: event.effect.EventData.props.subtitleColor,
         valueColor: event.effect.EventData.props.valueColor,
+        popupBackgroundColor: event.effect.EventData.props.popupBackgroundColor || "#0c0a20",
+        popupBorderColor: event.effect.EventData.props.popupBorderColor || event.effect.EventData.props.accentColor || "#ff54d7",
+        popupGlowColor: event.effect.EventData.props.popupGlowColor || event.effect.EventData.props.accentColor || "#ff54d7",
+        popupShineColor: event.effect.EventData.props.popupShineColor || "#ffffff",
+        boxBodyColor: event.effect.EventData.props.boxBodyColor || event.effect.EventData.props.accentColor || "#ff54d7",
+        boxLidColor: event.effect.EventData.props.boxLidColor || event.effect.EventData.props.accentColor || "#ff54d7",
+        boxBorderColor: event.effect.EventData.props.boxBorderColor || event.effect.EventData.props.accentColor || "#ff54d7",
+        boxBandColor: event.effect.EventData.props.boxBandColor || "#ffffff",
+        boxIconColor: event.effect.EventData.props.boxIconColor || "#ffffff",
+        boxShineColor: event.effect.EventData.props.boxShineColor || "#ffffff",
         fontFamily: event.effect.EventData.props.fontFamily,
-        revealDelayMs: Number(event.effect.EventData.props.revealDelayMs) || 2200,
-        revealHoldMs: Number(event.effect.EventData.props.revealHoldMs) || 5200,
+        revealDelayMs: toNonNegativeMs(event.effect.EventData.props.revealDelayMs, 2200),
+        revealHoldMs: toNonNegativeMs(event.effect.EventData.props.revealHoldMs, 5200),
+        exitDurationMs: toNonNegativeMs(event.effect.EventData.props.exitDurationMs, 1200),
         items: [],
       };
 
@@ -356,6 +504,11 @@ export function overlayLootBoxEffectType(
           return sanitized;
         });
 
+      const computedLifetimeSeconds = Math.max(
+        1,
+        Math.ceil((baseProps.revealDelayMs + baseProps.revealHoldMs + baseProps.exitDurationMs) / 1000)
+      );
+
       try {
         await manager.syncLootBox({
           id: lootBoxId,
@@ -364,8 +517,8 @@ export function overlayLootBoxEffectType(
           props: baseProps,
           items: sanitizedItems,
           overlaySettings: {
-            lengthSeconds: Number(event.effect.length) || DEFAULT_LENGTH_SECONDS,
-            durationMs: Number(event.effect.duration) || baseProps.revealDelayMs,
+            lengthSeconds: computedLifetimeSeconds,
+            durationMs: baseProps.exitDurationMs,
             overlayInstance: event.effect.overlayInstance,
           },
         });
@@ -387,7 +540,7 @@ export function overlayLootBoxEffectType(
         try {
           selectedItem.imageToken = resourceTokenManager.storeResourcePath(
             selectedItem.imageFile,
-            Number(event.effect.length) || DEFAULT_LENGTH_SECONDS
+            computedLifetimeSeconds
           );
         } catch (err) {
           logger.warn("Unable to prepare local image for loot item", err);
@@ -422,9 +575,9 @@ export function overlayLootBoxEffectType(
         overlayInstance: event.effect.overlayInstance,
         lootBoxId,
         uuid: randomUUID(),
-        length: Number(event.effect.length) || DEFAULT_LENGTH_SECONDS,
+        length: computedLifetimeSeconds,
         props: baseProps,
-        duration: Number(event.effect.duration) || baseProps.revealDelayMs,
+        duration: baseProps.exitDurationMs,
         selectedItem,
       };
 
@@ -475,9 +628,14 @@ export function overlayLootBoxEffectType(
                   return;
                 }
 
-                container.classList.toggle("msgg-no-background", Boolean(props.hideBackground));
+                const showGiftBox = props.showGiftBox !== false;
+                const showRewardPopup = props.showRewardPopup !== false;
+                const showItemContent = props.showItemContent !== false;
 
-                const mils = event.length ? Number(event.length) * 1000 : DEFAULT_LENGTH_SECONDS * 1000;
+                container.classList.toggle("msgg-no-background", Boolean(props.hideBackground));
+                container.classList.toggle("msgg-hide-gift-box", !showGiftBox);
+                container.classList.toggle("msgg-hide-reward-popup", !showRewardPopup);
+                container.classList.toggle("msgg-hide-item-content", !showItemContent);
 
                 const lootboxEl = container.querySelector(".lootbox") as HTMLElement | null;
                 const particlesContainer = container.querySelector(".particles-container") as HTMLElement | null;
@@ -564,6 +722,12 @@ export function overlayLootBoxEffectType(
                 const glowStrongAlpha = withOpacity(glowStrong, 0.38);
                 const beamStrong = withOpacity(baseGlow, 0.85);
                 const beamSoft = withOpacity(glowSoft, 0.55);
+                const boxBodyColor = props.boxBodyColor || baseAccent;
+                const boxLidColor = props.boxLidColor || boxBodyColor;
+                const boxBorderColor = props.boxBorderColor || baseAccent;
+                const boxBandColor = props.boxBandColor || "#ffffff";
+                const boxIconColor = props.boxIconColor || "#ffffff";
+                const boxShineColor = props.boxShineColor || "#ffffff";
 
                 container.style.setProperty("--bg-start", props.backgroundGradientStart || "#090e36");
                 container.style.setProperty("--bg-end", props.backgroundGradientEnd || "#2a0c41");
@@ -581,6 +745,18 @@ export function overlayLootBoxEffectType(
                 container.style.setProperty("--text-color", props.textColor || "#ffffff");
                 container.style.setProperty("--subtitle-color", props.subtitleColor || "#ffa94d");
                 container.style.setProperty("--value-color", props.valueColor || "#ffe8a3");
+                container.style.setProperty("--box-body-color", boxBodyColor);
+                container.style.setProperty("--box-body-light", lightenColor(boxBodyColor, 0.35));
+                container.style.setProperty("--box-body-dark", darkenColor(boxBodyColor, 0.25));
+                container.style.setProperty("--box-lid-color", boxLidColor);
+                container.style.setProperty("--box-lid-light", lightenColor(boxLidColor, 0.35));
+                container.style.setProperty("--box-lid-dark", darkenColor(boxLidColor, 0.25));
+                container.style.setProperty("--box-border-color", boxBorderColor);
+                container.style.setProperty("--box-band-strong", withOpacity(boxBandColor, 0.7));
+                container.style.setProperty("--box-band-soft", withOpacity(boxBandColor, 0.1));
+                container.style.setProperty("--box-icon-color", withOpacity(boxIconColor, 0.92));
+                container.style.setProperty("--box-icon-glow", withOpacity(boxIconColor, 0.9));
+                container.style.setProperty("--box-shine-color-alpha", withOpacity(boxShineColor, 0.45));
 
                 rewardNameEl.textContent = "";
                 if (rewardSubtitleEl) {
@@ -605,21 +781,14 @@ export function overlayLootBoxEffectType(
                   return item.imageUrl || "";
                 };
 
-                const parseDurationToMs = (duration: number | string | undefined, fallback: number) => {
-                  if (duration == null) {
-                    return fallback;
+                const randomUnit = (): number => {
+                  const cryptoApi = window.crypto || (window as any).msCrypto;
+                  if (cryptoApi?.getRandomValues) {
+                    const values = new Uint32Array(1);
+                    cryptoApi.getRandomValues(values);
+                    return values[0] / 0x100000000;
                   }
-                  if (typeof duration === "number") {
-                    return duration;
-                  }
-                  const numeric = Number.parseFloat(duration);
-                  if (Number.isNaN(numeric)) {
-                    return fallback;
-                  }
-                  if (duration.includes("ms")) {
-                    return numeric;
-                  }
-                  return numeric * 1000;
+                  return Math.random();
                 };
 
                 const selectWeightedItem = (items: LootBoxItem[]): LootBoxItem | undefined => {
@@ -628,7 +797,7 @@ export function overlayLootBoxEffectType(
                     return undefined;
                   }
                   const totalWeight = validItems.reduce((total, current) => total + (Number(current.weight) || 1), 0);
-                  let random = Math.random() * totalWeight;
+                  let random = randomUnit() * totalWeight;
                   for (const item of validItems) {
                     random -= Number(item.weight) || 1;
                     if (random <= 0) {
@@ -653,11 +822,23 @@ export function overlayLootBoxEffectType(
                 const rewardAccentLight = lightenColor(rewardAccent, 0.4);
                 const rewardAccentAlpha = withOpacity(rewardAccent, 0.35);
                 const rewardAccentStrong = withOpacity(rewardAccent, 0.6);
+                const popupBackgroundColor = props.popupBackgroundColor || "#0c0a20";
+                const configuredPopupBorderColor = props.popupBorderColor || baseAccent;
+                const configuredPopupGlowColor = props.popupGlowColor || baseAccent;
+                const popupBorderColor = configuredPopupBorderColor === baseAccent ? rewardAccent : configuredPopupBorderColor;
+                const popupGlowColor = configuredPopupGlowColor === baseAccent ? rewardAccent : configuredPopupGlowColor;
+                const popupShineColor = props.popupShineColor || "#ffffff";
+                const popupGlowStrong = withOpacity(popupGlowColor, 0.6);
 
                 container.style.setProperty("--reward-accent", rewardAccent);
                 container.style.setProperty("--reward-accent-light", rewardAccentLight);
                 container.style.setProperty("--reward-accent-alpha", rewardAccentAlpha);
                 container.style.setProperty("--reward-accent-strong", rewardAccentStrong);
+                container.style.setProperty("--popup-background-color", withOpacity(popupBackgroundColor, 0.88));
+                container.style.setProperty("--popup-border-color", popupBorderColor);
+                container.style.setProperty("--popup-glow-alpha", withOpacity(popupGlowColor, 0.35));
+                container.style.setProperty("--popup-glow-strong", popupGlowStrong);
+                container.style.setProperty("--popup-shine-color-alpha", withOpacity(popupShineColor, 0.25));
 
                 rewardNameEl.textContent = selectedItem.label || "Mystery Reward";
 
@@ -697,12 +878,21 @@ export function overlayLootBoxEffectType(
                 rewardImageWrapper.style.boxShadow = `0 0 40px ${rewardAccentStrong}`;
 
                 if (rewardGlow) {
-                  rewardGlow.style.background = `radial-gradient(circle, ${rewardAccentAlpha} 0%, transparent 70%)`;
+                  rewardGlow.style.background = `radial-gradient(circle, ${withOpacity(popupGlowColor, 0.35)} 0%, transparent 70%)`;
+                }
+
+                if (!showGiftBox && !showRewardPopup && !showItemContent) {
+                  // @ts-ignore
+                  sendWebsocketEvent(event.uuid, { result: selectedItem });
+                  $(`#${event.uuid}`).remove();
+                  return;
                 }
 
                 const revealDelay = props.revealDelayMs ?? 2200;
                 const holdDuration = props.revealHoldMs ?? 5200;
-                const overlayLifetime = Math.max(mils, revealDelay + holdDuration + 1200);
+                const exitDuration = props.exitDurationMs ?? 1200;
+                const overlayLifetime = revealDelay + holdDuration + exitDuration;
+                container.style.setProperty("--exit-duration", `${exitDuration}ms`);
 
                 const createParticles = () => {
                   particlesContainer.innerHTML = "";
@@ -746,23 +936,25 @@ export function overlayLootBoxEffectType(
                 const flashEnd = flashStart + 600;
                 const openedTime = openingStart + 840;
 
-                queue(shakeStart, () => lootboxEl.classList.add("shake"));
-                queue(openingStart, () => {
-                  lootboxEl.classList.remove("shake");
-                  lootboxEl.classList.add("opening");
-                  createParticles();
-                });
-                queue(flashStart, () => flashOverlay.classList.add("flash"));
-                queue(flashEnd, () => flashOverlay.classList.remove("flash"));
-                queue(openedTime, () => lootboxEl.classList.add("opened"));
+                if (showGiftBox) {
+                  queue(shakeStart, () => lootboxEl.classList.add("shake"));
+                  queue(openingStart, () => {
+                    lootboxEl.classList.remove("shake");
+                    lootboxEl.classList.add("opening");
+                    createParticles();
+                  });
+                  queue(flashStart, () => flashOverlay.classList.add("flash"));
+                  queue(flashEnd, () => flashOverlay.classList.remove("flash"));
+                  queue(openedTime, () => lootboxEl.classList.add("opened"));
+                }
 
                 const revealTimer = window.setTimeout(() => {
                   container.classList.add("msgg-open");
                   lootboxEl.classList.add("opened");
                   rewardDisplay.classList.add("show");
                   rewardCard.classList.add("active");
-                  rewardCard.style.borderColor = rewardAccent;
-                  rewardCard.style.boxShadow = `0 32px 75px rgba(0,0,0,0.55), 0 0 65px ${rewardAccentStrong}, inset 0 0 35px rgba(255,255,255,0.08)`;
+                  rewardCard.style.borderColor = popupBorderColor;
+                  rewardCard.style.boxShadow = `0 32px 75px rgba(0,0,0,0.55), 0 0 65px ${popupGlowStrong}, inset 0 0 35px rgba(255,255,255,0.08)`;
                   // @ts-ignore
                   sendWebsocketEvent(event.uuid, { result: selectedItem });
                 }, revealDelay);

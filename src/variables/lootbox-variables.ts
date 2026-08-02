@@ -1720,6 +1720,14 @@ export const lootBoxLastSelectionVariable: ReplaceVariable = {
                 description: "Returns the value of the last selected item (e.g., '!give mythic_blade')"
             },
             {
+                usage: "lootBoxLastSelection[grand_prize, subtitle]",
+                description: "Returns the subtitle of the last selected item (e.g., 'Legendary Drop')"
+            },
+            {
+                usage: "lootBoxLastSelection[grand_prize, fulltitle]",
+                description: "Returns the label and subtitle with a space and no separator (e.g., 'Green Beans')"
+            },
+            {
                 usage: "lootBoxLastSelection[grand_prize, id, label]",
                 description: "Shows both ID and label (e.g., 'mythic-blade | Mythic Blade')"
             },
@@ -1742,6 +1750,9 @@ export const lootBoxLastSelectionVariable: ReplaceVariable = {
         const options = createOptionSet(params, {
             name: "label",
             label: "label",
+            subtitle: "subtitle",
+            fulltitle: "fullTitle",
+            full_title: "fullTitle",
             value: "value",
             id: "id",
             raw: "raw"
@@ -1764,6 +1775,10 @@ export const lootBoxLastSelectionVariable: ReplaceVariable = {
             }
 
             const item = record.items[lastId];
+            const fullTitle = [item?.label, item?.subtitle]
+                .map((part) => (part ?? "").trim())
+                .filter((part) => part.length > 0)
+                .join(" ");
 
             if (options.has("raw")) {
                 return item
@@ -1782,6 +1797,12 @@ export const lootBoxLastSelectionVariable: ReplaceVariable = {
                 if (options.has("value")) {
                     return item?.value ?? "";
                 }
+                if (options.has("subtitle")) {
+                    return item?.subtitle ?? "";
+                }
+                if (options.has("fullTitle")) {
+                    return fullTitle;
+                }
                 if (options.has("id")) {
                     return lastId;
                 }
@@ -1793,6 +1814,12 @@ export const lootBoxLastSelectionVariable: ReplaceVariable = {
             }
             if (options.has("label")) {
                 parts.push(item?.label ?? "");
+            }
+            if (options.has("subtitle")) {
+                parts.push(item?.subtitle ?? "");
+            }
+            if (options.has("fullTitle")) {
+                parts.push(fullTitle);
             }
             if (options.has("value")) {
                 parts.push(item?.value ?? "");
